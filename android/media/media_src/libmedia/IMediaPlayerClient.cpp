@@ -56,6 +56,16 @@ IMPLEMENT_META_INTERFACE(MediaPlayerClient, "android.media.IMediaPlayerClient");
 
 status_t BnMediaPlayerClient::onTransact(uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
 {
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
 	switch(code) 
 	{
 		case NOTIFY: 
