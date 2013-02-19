@@ -1158,8 +1158,8 @@ static jint android_media_MediaPlayer_pullBatteryData(JNIEnv *env, jobject thiz,
 	说明:
 		1、
 */
-	sp<IBinder> binder = defaultServiceManager()->getService(String16("media.player"));
-	sp<IMediaPlayerService> service = interface_cast<IMediaPlayerService>(binder);
+	sp<IBinder> binder = defaultServiceManager()->getService(String16("media.player")); /* 从ServiceManager  获取media.player  服务的binder，即BnMediaPlayerService  的binder  */
+	sp<IMediaPlayerService> service = interface_cast<IMediaPlayerService>(binder); /* 根据上面得到的BnMediaPlayerService  的binder  实例一个BpMediaPlayerService  , 此行代码service  的值为一个BpMediaPlayerService  实例*/
 	if (service.get() == NULL)
 	{
 		jniThrowException(env, "java/lang/RuntimeException", "cannot get MediaPlayerService");

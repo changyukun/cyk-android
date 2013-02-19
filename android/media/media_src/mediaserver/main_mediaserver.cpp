@@ -33,6 +33,10 @@
 
 using namespace android;
 
+/*
+	cyk --------------->   多媒体服务进程的main  函数
+*/
+
 int main(int argc, char** argv)
 {
 /*

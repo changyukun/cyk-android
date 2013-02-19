@@ -105,60 +105,68 @@ const int kMaxFilterSize = 64;  // I pulled that out of thin air.
 //                    filtered.
 // @param[out] status On exit contains the status code to be returned.
 // @return true if the parcel starts with a valid filter.
-bool unmarshallFilter(const Parcel& p,
-                      Metadata::Filter *filter,
-                      status_t *status)
+bool unmarshallFilter(const Parcel& p,Metadata::Filter *filter, status_t *status)
 {
-    int32_t val;
-    if (p.readInt32(&val) != OK)
-    {
-        ALOGE("Failed to read filter's length");
-        *status = NOT_ENOUGH_DATA;
-        return false;
-    }
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	int32_t val;
+	if (p.readInt32(&val) != OK)
+	{
+		ALOGE("Failed to read filter's length");
+		*status = NOT_ENOUGH_DATA;
+		return false;
+	}
 
-    if( val > kMaxFilterSize || val < 0)
-    {
-        ALOGE("Invalid filter len %d", val);
-        *status = BAD_VALUE;
-        return false;
-    }
+	if( val > kMaxFilterSize || val < 0)
+	{
+		ALOGE("Invalid filter len %d", val);
+		*status = BAD_VALUE;
+		return false;
+	}
 
-    const size_t num = val;
+	const size_t num = val;
 
-    filter->clear();
-    filter->setCapacity(num);
+	filter->clear();
+	filter->setCapacity(num);
 
-    size_t size = num * sizeof(Metadata::Type);
+	size_t size = num * sizeof(Metadata::Type);
 
 
-    if (p.dataAvail() < size)
-    {
-        ALOGE("Filter too short expected %d but got %d", size, p.dataAvail());
-        *status = NOT_ENOUGH_DATA;
-        return false;
-    }
+	if (p.dataAvail() < size)
+	{
+		ALOGE("Filter too short expected %d but got %d", size, p.dataAvail());
+		*status = NOT_ENOUGH_DATA;
+		return false;
+	}
 
-    const Metadata::Type *data =
-            static_cast<const Metadata::Type*>(p.readInplace(size));
+	const Metadata::Type *data =
+	static_cast<const Metadata::Type*>(p.readInplace(size));
 
-    if (NULL == data)
-    {
-        ALOGE("Filter had no data");
-        *status = BAD_VALUE;
-        return false;
-    }
+	if (NULL == data)
+	{
+		ALOGE("Filter had no data");
+		*status = BAD_VALUE;
+		return false;
+	}
 
-    // TODO: The stl impl of vector would be more efficient here
-    // because it degenerates into a memcpy on pod types. Try to
-    // replace later or use stl::set.
-    for (size_t i = 0; i < num; ++i)
-    {
-        filter->add(*data);
-        ++data;
-    }
-    *status = OK;
-    return true;
+	// TODO: The stl impl of vector would be more efficient here
+	// because it degenerates into a memcpy on pod types. Try to
+	// replace later or use stl::set.
+	for (size_t i = 0; i < num; ++i)
+	{
+		filter->add(*data);
+		++data;
+	}
+	*status = OK;
+	return true;
 }
 
 // @param filter Of metadata type.
@@ -166,11 +174,24 @@ bool unmarshallFilter(const Parcel& p,
 // @return true if a match was found.
 bool findMetadata(const Metadata::Filter& filter, const int32_t val)
 {
-    // Deal with empty and ANY right away
-    if (filter.isEmpty()) return false;
-    if (filter[0] == Metadata::kAny) return true;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	// Deal with empty and ANY right away
+	if (filter.isEmpty())
+		return false;
+	
+	if (filter[0] == Metadata::kAny) 
+		return true;
 
-    return filter.indexOf(val) >= 0;
+	return filter.indexOf(val) >= 0;
 }
 
 }  // anonymous namespace
@@ -178,22 +199,42 @@ bool findMetadata(const Metadata::Filter& filter, const int32_t val)
 
 namespace android {
 
-static bool checkPermission(const char* permissionString) {
+static bool checkPermission(const char* permissionString) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
 #ifndef HAVE_ANDROID_OS
-    return true;
+	return true;
 #endif
-    if (getpid() == IPCThreadState::self()->getCallingPid()) return true;
-    bool ok = checkCallingPermission(String16(permissionString));
-    if (!ok) ALOGE("Request requires %s", permissionString);
-    return ok;
+	if (getpid() == IPCThreadState::self()->getCallingPid())
+		return true;
+	
+	bool ok = checkCallingPermission(String16(permissionString));
+	
+	if (!ok) 
+		ALOGE("Request requires %s", permissionString);
+	
+	return ok;
 }
 
 // TODO: Temp hack until we can register players
-typedef struct {
+typedef struct 
+{
     const char *extension;
     const player_type playertype;
 } extmap;
-extmap FILE_EXTS [] =  {
+
+
+extmap FILE_EXTS [] =  
+{
         {".mid", SONIVOX_PLAYER},
         {".midi", SONIVOX_PLAYER},
         {".smf", SONIVOX_PLAYER},
@@ -441,22 +482,24 @@ status_t MediaPlayerService::Client::dump(int fd, const Vector<String16>& args) 
 	说明:
 		1、
 */
-    const size_t SIZE = 256;
-    char buffer[SIZE];
-    String8 result;
-    result.append(" Client\n");
-    snprintf(buffer, 255, "  pid(%d), connId(%d), status(%d), looping(%s)\n",
-            mPid, mConnId, mStatus, mLoop?"true": "false");
-    result.append(buffer);
-    write(fd, result.string(), result.size());
-    if (mPlayer != NULL) {
-        mPlayer->dump(fd, args);
-    }
-    if (mAudioOutput != 0) {
-        mAudioOutput->dump(fd, args);
-    }
-    write(fd, "\n", 1);
-    return NO_ERROR;
+	const size_t SIZE = 256;
+	char buffer[SIZE];
+	String8 result;
+	result.append(" Client\n");
+	snprintf(buffer, 255, "  pid(%d), connId(%d), status(%d), looping(%s)\n", mPid, mConnId, mStatus, mLoop?"true": "false");
+	result.append(buffer);
+	write(fd, result.string(), result.size());
+	if (mPlayer != NULL) 
+	{
+		mPlayer->dump(fd, args);
+	}
+	
+	if (mAudioOutput != 0) 
+	{
+		mAudioOutput->dump(fd, args);
+	}
+	write(fd, "\n", 1);
+	return NO_ERROR;
 }
 
 status_t MediaPlayerService::dump(int fd, const Vector<String16>& args)
@@ -464,123 +507,160 @@ status_t MediaPlayerService::dump(int fd, const Vector<String16>& args)
 /*
 	参数:
 		1、
-		
+
 	返回:
 		1、
-		
+
 	说明:
 		1、
 */
-    const size_t SIZE = 256;
-    char buffer[SIZE];
-    String8 result;
-    if (checkCallingPermission(String16("android.permission.DUMP")) == false) {
-        snprintf(buffer, SIZE, "Permission Denial: "
-                "can't dump MediaPlayerService from pid=%d, uid=%d\n",
-                IPCThreadState::self()->getCallingPid(),
-                IPCThreadState::self()->getCallingUid());
-        result.append(buffer);
-    } else {
-        Mutex::Autolock lock(mLock);
-        for (int i = 0, n = mClients.size(); i < n; ++i) {
-            sp<Client> c = mClients[i].promote();
-            if (c != 0) c->dump(fd, args);
-        }
-        if (mMediaRecorderClients.size() == 0) {
-                result.append(" No media recorder client\n\n");
-        } else {
-            for (int i = 0, n = mMediaRecorderClients.size(); i < n; ++i) {
-                sp<MediaRecorderClient> c = mMediaRecorderClients[i].promote();
-                if (c != 0) {
-                    snprintf(buffer, 255, " MediaRecorderClient pid(%d)\n", c->mPid);
-                    result.append(buffer);
-                    write(fd, result.string(), result.size());
-                    result = "\n";
-                    c->dump(fd, args);
-                }
-            }
-        }
+	const size_t SIZE = 256;
+	char buffer[SIZE];
+	String8 result;
+	if (checkCallingPermission(String16("android.permission.DUMP")) == false)
+	{
+		snprintf(buffer, SIZE, "Permission Denial: "
+							"can't dump MediaPlayerService from pid=%d, uid=%d\n",
+							IPCThreadState::self()->getCallingPid(),
+							IPCThreadState::self()->getCallingUid());
+		result.append(buffer);
+	}
+	else 
+	{
+		Mutex::Autolock lock(mLock);
+		for (int i = 0, n = mClients.size(); i < n; ++i)
+		{
+			sp<Client> c = mClients[i].promote();
+			if (c != 0)
+				c->dump(fd, args);
+		}
+		
+		if (mMediaRecorderClients.size() == 0) 
+		{
+			result.append(" No media recorder client\n\n");
+		}
+		else 
+		{
+			for (int i = 0, n = mMediaRecorderClients.size(); i < n; ++i) 
+			{
+				sp<MediaRecorderClient> c = mMediaRecorderClients[i].promote();
+				if (c != 0) 
+				{
+					snprintf(buffer, 255, " MediaRecorderClient pid(%d)\n", c->mPid);
+					result.append(buffer);
+					write(fd, result.string(), result.size());
+					result = "\n";
+					c->dump(fd, args);
+				}
+			}
+		}
 
-        result.append(" Files opened and/or mapped:\n");
-        snprintf(buffer, SIZE, "/proc/%d/maps", gettid());
-        FILE *f = fopen(buffer, "r");
-        if (f) {
-            while (!feof(f)) {
-                fgets(buffer, SIZE, f);
-                if (strstr(buffer, " /mnt/sdcard/") ||
-                    strstr(buffer, " /system/sounds/") ||
-                    strstr(buffer, " /data/") ||
-                    strstr(buffer, " /system/media/")) {
-                    result.append("  ");
-                    result.append(buffer);
-                }
-            }
-            fclose(f);
-        } else {
-            result.append("couldn't open ");
-            result.append(buffer);
-            result.append("\n");
-        }
+		result.append(" Files opened and/or mapped:\n");
+		snprintf(buffer, SIZE, "/proc/%d/maps", gettid());
+		FILE *f = fopen(buffer, "r");
+		if (f) 
+		{
+			while (!feof(f)) 
+			{
+				fgets(buffer, SIZE, f);
+				if (strstr(buffer, " /mnt/sdcard/") ||
+								strstr(buffer, " /system/sounds/") ||
+								strstr(buffer, " /data/") ||
+								strstr(buffer, " /system/media/")) 
+				{
+					result.append("  ");
+					result.append(buffer);
+				}
+			}
+			fclose(f);
+		} 
+		else
+		{
+			result.append("couldn't open ");
+			result.append(buffer);
+			result.append("\n");
+		}
 
-        snprintf(buffer, SIZE, "/proc/%d/fd", gettid());
-        DIR *d = opendir(buffer);
-        if (d) {
-            struct dirent *ent;
-            while((ent = readdir(d)) != NULL) {
-                if (strcmp(ent->d_name,".") && strcmp(ent->d_name,"..")) {
-                    snprintf(buffer, SIZE, "/proc/%d/fd/%s", gettid(), ent->d_name);
-                    struct stat s;
-                    if (lstat(buffer, &s) == 0) {
-                        if ((s.st_mode & S_IFMT) == S_IFLNK) {
-                            char linkto[256];
-                            int len = readlink(buffer, linkto, sizeof(linkto));
-                            if(len > 0) {
-                                if(len > 255) {
-                                    linkto[252] = '.';
-                                    linkto[253] = '.';
-                                    linkto[254] = '.';
-                                    linkto[255] = 0;
-                                } else {
-                                    linkto[len] = 0;
-                                }
-                                if (strstr(linkto, "/mnt/sdcard/") == linkto ||
-                                    strstr(linkto, "/system/sounds/") == linkto ||
-                                    strstr(linkto, "/data/") == linkto ||
-                                    strstr(linkto, "/system/media/") == linkto) {
-                                    result.append("  ");
-                                    result.append(buffer);
-                                    result.append(" -> ");
-                                    result.append(linkto);
-                                    result.append("\n");
-                                }
-                            }
-                        } else {
-                            result.append("  unexpected type for ");
-                            result.append(buffer);
-                            result.append("\n");
-                        }
-                    }
-                }
-            }
-            closedir(d);
-        } else {
-            result.append("couldn't open ");
-            result.append(buffer);
-            result.append("\n");
-        }
+		snprintf(buffer, SIZE, "/proc/%d/fd", gettid());
+		DIR *d = opendir(buffer);
+		if (d)
+		{
+			struct dirent *ent;
+			while((ent = readdir(d)) != NULL) 
+			{
+				if (strcmp(ent->d_name,".") && strcmp(ent->d_name,"..")) 
+				{
+					snprintf(buffer, SIZE, "/proc/%d/fd/%s", gettid(), ent->d_name);
+					struct stat s;
+					if (lstat(buffer, &s) == 0) 
+					{
+						if ((s.st_mode & S_IFMT) == S_IFLNK) 
+						{
+							char linkto[256];
+							int len = readlink(buffer, linkto, sizeof(linkto));
+							if(len > 0) 
+							{
+								if(len > 255)
+								{
+									linkto[252] = '.';
+									linkto[253] = '.';
+									linkto[254] = '.';
+									linkto[255] = 0;
+								} 
+								else
+								{
+									linkto[len] = 0;
+								}
+								
+								if (strstr(linkto, "/mnt/sdcard/") == linkto ||
+													strstr(linkto, "/system/sounds/") == linkto ||
+													strstr(linkto, "/data/") == linkto ||
+													strstr(linkto, "/system/media/") == linkto) 
+								{
+									result.append("  ");
+									result.append(buffer);
+									result.append(" -> ");
+									result.append(linkto);
+									result.append("\n");
+								}
+							}
+						}
+						else 
+						{
+							result.append("  unexpected type for ");
+							result.append(buffer);
+							result.append("\n");
+						}
+					}
+				}
+			}
+			closedir(d);
+		}
+		else 
+		{
+			result.append("couldn't open ");
+			result.append(buffer);
+			result.append("\n");
+		}
 
-        bool dumpMem = false;
-        for (size_t i = 0; i < args.size(); i++) {
-            if (args[i] == String16("-m")) {
-                dumpMem = true;
-            }
-        }
-        if (dumpMem) {
-            dumpMemoryAddresses(fd);
-        }
-    }
-    write(fd, result.string(), result.size());
-    return NO_ERROR;
+		bool dumpMem = false;
+		for (size_t i = 0; i < args.size(); i++) 
+		{
+			if (args[i] == String16("-m")) 
+			{
+				dumpMem = true;
+			}
+		}
+		
+		if (dumpMem) 
+		{
+			dumpMemoryAddresses(fd);
+		}
+	}
+	
+	write(fd, result.string(), result.size());
+	
+	return NO_ERROR;
 }
 
 void MediaPlayerService::removeClient(wp<Client> client)
@@ -1414,154 +1494,313 @@ status_t MediaPlayerService::Client::getDuration(int *msec)
 
 status_t MediaPlayerService::Client::seekTo(int msec)
 {
-    ALOGV("[%d] seekTo(%d)", mConnId, msec);
-    sp<MediaPlayerBase> p = getPlayer();
-    if (p == 0) return UNKNOWN_ERROR;
-    return p->seekTo(msec);
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("[%d] seekTo(%d)", mConnId, msec);
+	sp<MediaPlayerBase> p = getPlayer();
+	if (p == 0) return UNKNOWN_ERROR;
+	return p->seekTo(msec);
 }
 
 status_t MediaPlayerService::Client::reset()
 {
-    ALOGV("[%d] reset", mConnId);
-    sp<MediaPlayerBase> p = getPlayer();
-    if (p == 0) return UNKNOWN_ERROR;
-    return p->reset();
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("[%d] reset", mConnId);
+	sp<MediaPlayerBase> p = getPlayer();
+	if (p == 0) return UNKNOWN_ERROR;
+	return p->reset();
 }
 
 status_t MediaPlayerService::Client::setAudioStreamType(int type)
 {
-    ALOGV("[%d] setAudioStreamType(%d)", mConnId, type);
-    // TODO: for hardware output, call player instead
-    Mutex::Autolock l(mLock);
-    if (mAudioOutput != 0) mAudioOutput->setAudioStreamType(type);
-    return NO_ERROR;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("[%d] setAudioStreamType(%d)", mConnId, type);
+	// TODO: for hardware output, call player instead
+	Mutex::Autolock l(mLock);
+	if (mAudioOutput != 0) mAudioOutput->setAudioStreamType(type);
+	return NO_ERROR;
 }
 
 status_t MediaPlayerService::Client::setLooping(int loop)
 {
-    ALOGV("[%d] setLooping(%d)", mConnId, loop);
-    mLoop = loop;
-    sp<MediaPlayerBase> p = getPlayer();
-    if (p != 0) return p->setLooping(loop);
-    return NO_ERROR;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("[%d] setLooping(%d)", mConnId, loop);
+	mLoop = loop;
+	sp<MediaPlayerBase> p = getPlayer();
+	if (p != 0) return p->setLooping(loop);
+	return NO_ERROR;
 }
 
 status_t MediaPlayerService::Client::setVolume(float leftVolume, float rightVolume)
 {
-    ALOGV("[%d] setVolume(%f, %f)", mConnId, leftVolume, rightVolume);
-    // TODO: for hardware output, call player instead
-    Mutex::Autolock l(mLock);
-    if (mAudioOutput != 0) mAudioOutput->setVolume(leftVolume, rightVolume);
-    return NO_ERROR;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("[%d] setVolume(%f, %f)", mConnId, leftVolume, rightVolume);
+	// TODO: for hardware output, call player instead
+	Mutex::Autolock l(mLock);
+	if (mAudioOutput != 0) mAudioOutput->setVolume(leftVolume, rightVolume);
+	return NO_ERROR;
 }
 
 status_t MediaPlayerService::Client::setAuxEffectSendLevel(float level)
 {
-    ALOGV("[%d] setAuxEffectSendLevel(%f)", mConnId, level);
-    Mutex::Autolock l(mLock);
-    if (mAudioOutput != 0) return mAudioOutput->setAuxEffectSendLevel(level);
-    return NO_ERROR;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("[%d] setAuxEffectSendLevel(%f)", mConnId, level);
+	Mutex::Autolock l(mLock);
+	if (mAudioOutput != 0) return mAudioOutput->setAuxEffectSendLevel(level);
+	return NO_ERROR;
 }
 
 status_t MediaPlayerService::Client::attachAuxEffect(int effectId)
 {
-    ALOGV("[%d] attachAuxEffect(%d)", mConnId, effectId);
-    Mutex::Autolock l(mLock);
-    if (mAudioOutput != 0) return mAudioOutput->attachAuxEffect(effectId);
-    return NO_ERROR;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("[%d] attachAuxEffect(%d)", mConnId, effectId);
+	Mutex::Autolock l(mLock);
+	if (mAudioOutput != 0) return mAudioOutput->attachAuxEffect(effectId);
+	return NO_ERROR;
 }
 
-status_t MediaPlayerService::Client::setParameter(int key, const Parcel &request) {
-    ALOGV("[%d] setParameter(%d)", mConnId, key);
-    sp<MediaPlayerBase> p = getPlayer();
-    if (p == 0) return UNKNOWN_ERROR;
-    return p->setParameter(key, request);
-}
-
-status_t MediaPlayerService::Client::getParameter(int key, Parcel *reply) {
-    ALOGV("[%d] getParameter(%d)", mConnId, key);
-    sp<MediaPlayerBase> p = getPlayer();
-    if (p == 0) return UNKNOWN_ERROR;
-    return p->getParameter(key, reply);
-}
-
-void MediaPlayerService::Client::notify(
-        void* cookie, int msg, int ext1, int ext2, const Parcel *obj)
+status_t MediaPlayerService::Client::setParameter(int key, const Parcel &request) 
 {
-    Client* client = static_cast<Client*>(cookie);
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("[%d] setParameter(%d)", mConnId, key);
+	sp<MediaPlayerBase> p = getPlayer();
+	if (p == 0) return UNKNOWN_ERROR;
+	return p->setParameter(key, request);
+}
 
-    if (MEDIA_INFO == msg &&
-        MEDIA_INFO_METADATA_UPDATE == ext1) {
-        const media::Metadata::Type metadata_type = ext2;
+status_t MediaPlayerService::Client::getParameter(int key, Parcel *reply)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("[%d] getParameter(%d)", mConnId, key);
+	sp<MediaPlayerBase> p = getPlayer();
+	if (p == 0) return UNKNOWN_ERROR;
+	return p->getParameter(key, reply);
+}
 
-        if(client->shouldDropMetadata(metadata_type)) {
-            return;
-        }
+void MediaPlayerService::Client::notify(void* cookie, int msg, int ext1, int ext2, const Parcel *obj)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Client* client = static_cast<Client*>(cookie);
 
-        // Update the list of metadata that have changed. getMetadata
-        // also access mMetadataUpdated and clears it.
-        client->addNewMetadataUpdate(metadata_type);
-    }
-    ALOGV("[%d] notify (%p, %d, %d, %d)", client->mConnId, cookie, msg, ext1, ext2);
-    client->mClient->notify(msg, ext1, ext2, obj);
+	if (MEDIA_INFO == msg && MEDIA_INFO_METADATA_UPDATE == ext1) 
+	{
+		const media::Metadata::Type metadata_type = ext2;
+
+		if(client->shouldDropMetadata(metadata_type))
+		{
+			return;
+		}
+
+		// Update the list of metadata that have changed. getMetadata
+		// also access mMetadataUpdated and clears it.
+		client->addNewMetadataUpdate(metadata_type);
+	}
+	ALOGV("[%d] notify (%p, %d, %d, %d)", client->mConnId, cookie, msg, ext1, ext2);
+	client->mClient->notify(msg, ext1, ext2, obj);
 }
 
 
 bool MediaPlayerService::Client::shouldDropMetadata(media::Metadata::Type code) const
 {
-    Mutex::Autolock lock(mLock);
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock lock(mLock);
 
-    if (findMetadata(mMetadataDrop, code)) {
-        return true;
-    }
+	if (findMetadata(mMetadataDrop, code)) 
+	{
+		return true;
+	}
 
-    if (mMetadataAllow.isEmpty() || findMetadata(mMetadataAllow, code)) {
-        return false;
-    } else {
-        return true;
-    }
+	if (mMetadataAllow.isEmpty() || findMetadata(mMetadataAllow, code))
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 
-void MediaPlayerService::Client::addNewMetadataUpdate(media::Metadata::Type metadata_type) {
-    Mutex::Autolock lock(mLock);
-    if (mMetadataUpdated.indexOf(metadata_type) < 0) {
-        mMetadataUpdated.add(metadata_type);
-    }
+void MediaPlayerService::Client::addNewMetadataUpdate(media::Metadata::Type metadata_type) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock lock(mLock);
+	if (mMetadataUpdated.indexOf(metadata_type) < 0) 
+	{
+		mMetadataUpdated.add(metadata_type);
+	}
 }
 
 #if CALLBACK_ANTAGONIZER
 const int Antagonizer::interval = 10000; // 10 msecs
 
-Antagonizer::Antagonizer(notify_callback_f cb, void* client) :
-    mExit(false), mActive(false), mClient(client), mCb(cb)
+Antagonizer::Antagonizer(notify_callback_f cb, void* client) : mExit(false), mActive(false), mClient(client), mCb(cb)
 {
-    createThread(callbackThread, this);
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+    	createThread(callbackThread, this);
 }
 
 void Antagonizer::kill()
 {
-    Mutex::Autolock _l(mLock);
-    mActive = false;
-    mExit = true;
-    mCondition.wait(mLock);
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock _l(mLock);
+	mActive = false;
+	mExit = true;
+	mCondition.wait(mLock);
 }
 
 int Antagonizer::callbackThread(void* user)
 {
-    ALOGD("Antagonizer started");
-    Antagonizer* p = reinterpret_cast<Antagonizer*>(user);
-    while (!p->mExit) {
-        if (p->mActive) {
-            ALOGV("send event");
-            p->mCb(p->mClient, 0, 0, 0);
-        }
-        usleep(interval);
-    }
-    Mutex::Autolock _l(p->mLock);
-    p->mCondition.signal();
-    ALOGD("Antagonizer stopped");
-    return 0;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGD("Antagonizer started");
+	Antagonizer* p = reinterpret_cast<Antagonizer*>(user);
+	while (!p->mExit) 
+	{
+		if (p->mActive) 
+		{
+			ALOGV("send event");
+			p->mCb(p->mClient, 0, 0, 0);
+		}
+		usleep(interval);
+	}
+	Mutex::Autolock _l(p->mLock);
+	p->mCondition.signal();
+	ALOGD("Antagonizer stopped");
+	return 0;
 }
 #endif
 
@@ -1569,752 +1808,1249 @@ static size_t kDefaultHeapSize = 1024 * 1024; // 1MB
 
 sp<IMemory> MediaPlayerService::decode(const char* url, uint32_t *pSampleRate, int* pNumChannels, int* pFormat)
 {
-    ALOGV("decode(%s)", url);
-    sp<MemoryBase> mem;
-    sp<MediaPlayerBase> player;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("decode(%s)", url);
+	sp<MemoryBase> mem;
+	sp<MediaPlayerBase> player;
 
-    // Protect our precious, precious DRMd ringtones by only allowing
-    // decoding of http, but not filesystem paths or content Uris.
-    // If the application wants to decode those, it should open a
-    // filedescriptor for them and use that.
-    if (url != NULL && strncmp(url, "http://", 7) != 0) {
-        ALOGD("Can't decode %s by path, use filedescriptor instead", url);
-        return mem;
-    }
+	// Protect our precious, precious DRMd ringtones by only allowing
+	// decoding of http, but not filesystem paths or content Uris.
+	// If the application wants to decode those, it should open a
+	// filedescriptor for them and use that.
+	if (url != NULL && strncmp(url, "http://", 7) != 0) 
+	{
+		ALOGD("Can't decode %s by path, use filedescriptor instead", url);
+		return mem;
+	}
 
-    player_type playerType = getPlayerType(url);
-    ALOGV("player type = %d", playerType);
+	player_type playerType = getPlayerType(url);
+	ALOGV("player type = %d", playerType);
 
-    // create the right type of player
-    sp<AudioCache> cache = new AudioCache(url);
-    player = android::createPlayer(playerType, cache.get(), cache->notify);
-    if (player == NULL) goto Exit;
-    if (player->hardwareOutput()) goto Exit;
+	// create the right type of player
+	sp<AudioCache> cache = new AudioCache(url);
+	player = android::createPlayer(playerType, cache.get(), cache->notify);
+	if (player == NULL) 
+		goto Exit;
+	if (player->hardwareOutput()) 
+		goto Exit;
 
-    static_cast<MediaPlayerInterface*>(player.get())->setAudioSink(cache);
+	static_cast<MediaPlayerInterface*>(player.get())->setAudioSink(cache);
 
-    // set data source
-    if (player->setDataSource(url) != NO_ERROR) goto Exit;
+	// set data source
+	if (player->setDataSource(url) != NO_ERROR) 
+		goto Exit;
 
-    ALOGV("prepare");
-    player->prepareAsync();
+	ALOGV("prepare");
+	player->prepareAsync();
 
-    ALOGV("wait for prepare");
-    if (cache->wait() != NO_ERROR) goto Exit;
+	ALOGV("wait for prepare");
+	if (cache->wait() != NO_ERROR) 
+		goto Exit;
 
-    ALOGV("start");
-    player->start();
+	ALOGV("start");
+	player->start();
 
-    ALOGV("wait for playback complete");
-    cache->wait();
-    // in case of error, return what was successfully decoded.
-    if (cache->size() == 0) {
-        goto Exit;
-    }
+	ALOGV("wait for playback complete");
+	cache->wait();
+	// in case of error, return what was successfully decoded.
+	if (cache->size() == 0)
+	{
+		goto Exit;
+	}
 
-    mem = new MemoryBase(cache->getHeap(), 0, cache->size());
-    *pSampleRate = cache->sampleRate();
-    *pNumChannels = cache->channelCount();
-    *pFormat = (int)cache->format();
-    ALOGV("return memory @ %p, sampleRate=%u, channelCount = %d, format = %d", mem->pointer(), *pSampleRate, *pNumChannels, *pFormat);
+	mem = new MemoryBase(cache->getHeap(), 0, cache->size());
+	*pSampleRate = cache->sampleRate();
+	*pNumChannels = cache->channelCount();
+	*pFormat = (int)cache->format();
+	ALOGV("return memory @ %p, sampleRate=%u, channelCount = %d, format = %d", mem->pointer(), *pSampleRate, *pNumChannels, *pFormat);
 
 Exit:
-    if (player != 0) player->reset();
-    return mem;
+	if (player != 0) 
+		player->reset();
+
+	return mem;
 }
 
 sp<IMemory> MediaPlayerService::decode(int fd, int64_t offset, int64_t length, uint32_t *pSampleRate, int* pNumChannels, int* pFormat)
 {
-    ALOGV("decode(%d, %lld, %lld)", fd, offset, length);
-    sp<MemoryBase> mem;
-    sp<MediaPlayerBase> player;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("decode(%d, %lld, %lld)", fd, offset, length);
+	sp<MemoryBase> mem;
+	sp<MediaPlayerBase> player;
 
-    player_type playerType = getPlayerType(fd, offset, length);
-    ALOGV("player type = %d", playerType);
+	player_type playerType = getPlayerType(fd, offset, length);
+	ALOGV("player type = %d", playerType);
 
-    // create the right type of player
-    sp<AudioCache> cache = new AudioCache("decode_fd");
-    player = android::createPlayer(playerType, cache.get(), cache->notify);
-    if (player == NULL) goto Exit;
-    if (player->hardwareOutput()) goto Exit;
+	// create the right type of player
+	sp<AudioCache> cache = new AudioCache("decode_fd");
+	player = android::createPlayer(playerType, cache.get(), cache->notify);
+	if (player == NULL) 
+		goto Exit;
+	if (player->hardwareOutput()) 
+		goto Exit;
 
-    static_cast<MediaPlayerInterface*>(player.get())->setAudioSink(cache);
+	static_cast<MediaPlayerInterface*>(player.get())->setAudioSink(cache);
 
-    // set data source
-    if (player->setDataSource(fd, offset, length) != NO_ERROR) goto Exit;
+	// set data source
+	if (player->setDataSource(fd, offset, length) != NO_ERROR) 
+		goto Exit;
 
-    ALOGV("prepare");
-    player->prepareAsync();
+	ALOGV("prepare");
+	player->prepareAsync();
 
-    ALOGV("wait for prepare");
-    if (cache->wait() != NO_ERROR) goto Exit;
+	ALOGV("wait for prepare");
+	if (cache->wait() != NO_ERROR) 
+		goto Exit;
 
-    ALOGV("start");
-    player->start();
+	ALOGV("start");
+	player->start();
 
-    ALOGV("wait for playback complete");
-    cache->wait();
-    // in case of error, return what was successfully decoded.
-    if (cache->size() == 0) {
-        goto Exit;
-    }
+	ALOGV("wait for playback complete");
+	cache->wait();
+	// in case of error, return what was successfully decoded.
+	if (cache->size() == 0)
+	{
+		goto Exit;
+	}
 
-    mem = new MemoryBase(cache->getHeap(), 0, cache->size());
-    *pSampleRate = cache->sampleRate();
-    *pNumChannels = cache->channelCount();
-    *pFormat = cache->format();
-    ALOGV("return memory @ %p, sampleRate=%u, channelCount = %d, format = %d", mem->pointer(), *pSampleRate, *pNumChannels, *pFormat);
+	mem = new MemoryBase(cache->getHeap(), 0, cache->size());
+	*pSampleRate = cache->sampleRate();
+	*pNumChannels = cache->channelCount();
+	*pFormat = cache->format();
+	ALOGV("return memory @ %p, sampleRate=%u, channelCount = %d, format = %d", mem->pointer(), *pSampleRate, *pNumChannels, *pFormat);
 
 Exit:
-    if (player != 0) player->reset();
-    ::close(fd);
-    return mem;
+	if (player != 0) 
+		player->reset();
+
+	::close(fd);
+	return mem;
 }
 
 
 #undef LOG_TAG
 #define LOG_TAG "AudioSink"
 MediaPlayerService::AudioOutput::AudioOutput(int sessionId)
-    : mCallback(NULL),
-      mCallbackCookie(NULL),
-      mSessionId(sessionId) {
-    ALOGV("AudioOutput(%d)", sessionId);
-    mTrack = 0;
-    mStreamType = AUDIO_STREAM_MUSIC;
-    mLeftVolume = 1.0;
-    mRightVolume = 1.0;
-    mMsecsPerFrame = 0;
-    mAuxEffectId = 0;
-    mSendLevel = 0.0;
-    setMinBufferCount();
+											: mCallback(NULL),
+											mCallbackCookie(NULL),
+											mSessionId(sessionId) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("AudioOutput(%d)", sessionId);
+	mTrack = 0;
+	mStreamType = AUDIO_STREAM_MUSIC;
+	mLeftVolume = 1.0;
+	mRightVolume = 1.0;
+	mMsecsPerFrame = 0;
+	mAuxEffectId = 0;
+	mSendLevel = 0.0;
+	setMinBufferCount();
 }
 
 MediaPlayerService::AudioOutput::~AudioOutput()
 {
-    close();
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+    	close();
 }
 
 void MediaPlayerService::AudioOutput::setMinBufferCount()
 {
-    char value[PROPERTY_VALUE_MAX];
-    if (property_get("ro.kernel.qemu", value, 0)) {
-        mIsOnEmulator = true;
-        mMinBufferCount = 12;  // to prevent systematic buffer underrun for emulator
-    }
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	char value[PROPERTY_VALUE_MAX];
+	if (property_get("ro.kernel.qemu", value, 0))
+	{
+		mIsOnEmulator = true;
+		mMinBufferCount = 12;  // to prevent systematic buffer underrun for emulator
+	}
 }
 
 bool MediaPlayerService::AudioOutput::isOnEmulator()
 {
-    setMinBufferCount();
-    return mIsOnEmulator;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	setMinBufferCount();
+	return mIsOnEmulator;
 }
 
 int MediaPlayerService::AudioOutput::getMinBufferCount()
 {
-    setMinBufferCount();
-    return mMinBufferCount;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	setMinBufferCount();
+	return mMinBufferCount;
 }
 
 ssize_t MediaPlayerService::AudioOutput::bufferSize() const
 {
-    if (mTrack == 0) return NO_INIT;
-    return mTrack->frameCount() * frameSize();
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mTrack == 0) return NO_INIT;
+	return mTrack->frameCount() * frameSize();
 }
 
 ssize_t MediaPlayerService::AudioOutput::frameCount() const
 {
-    if (mTrack == 0) return NO_INIT;
-    return mTrack->frameCount();
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mTrack == 0) return NO_INIT;
+	return mTrack->frameCount();
 }
 
 ssize_t MediaPlayerService::AudioOutput::channelCount() const
 {
-    if (mTrack == 0) return NO_INIT;
-    return mTrack->channelCount();
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mTrack == 0) return NO_INIT;
+	return mTrack->channelCount();
 }
 
 ssize_t MediaPlayerService::AudioOutput::frameSize() const
 {
-    if (mTrack == 0) return NO_INIT;
-    return mTrack->frameSize();
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mTrack == 0) return NO_INIT;
+	return mTrack->frameSize();
 }
 
 uint32_t MediaPlayerService::AudioOutput::latency () const
 {
-    if (mTrack == 0) return 0;
-    return mTrack->latency();
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mTrack == 0) return 0;
+	return mTrack->latency();
 }
 
 float MediaPlayerService::AudioOutput::msecsPerFrame() const
 {
-    return mMsecsPerFrame;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+    	return mMsecsPerFrame;
 }
 
 status_t MediaPlayerService::AudioOutput::getPosition(uint32_t *position)
 {
-    if (mTrack == 0) return NO_INIT;
-    return mTrack->getPosition(position);
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mTrack == 0) return NO_INIT;
+	return mTrack->getPosition(position);
 }
 
-status_t MediaPlayerService::AudioOutput::open(
-        uint32_t sampleRate, int channelCount, int format, int bufferCount,
-        AudioCallback cb, void *cookie)
+status_t MediaPlayerService::AudioOutput::open(uint32_t sampleRate, int channelCount, int format, int bufferCount, AudioCallback cb, void *cookie)
 {
-    mCallback = cb;
-    mCallbackCookie = cookie;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	mCallback = cb;
+	mCallbackCookie = cookie;
 
-    // Check argument "bufferCount" against the mininum buffer count
-    if (bufferCount < mMinBufferCount) {
-        ALOGD("bufferCount (%d) is too small and increased to %d", bufferCount, mMinBufferCount);
-        bufferCount = mMinBufferCount;
+	// Check argument "bufferCount" against the mininum buffer count
+	if (bufferCount < mMinBufferCount)
+	{
+		ALOGD("bufferCount (%d) is too small and increased to %d", bufferCount, mMinBufferCount);
+		bufferCount = mMinBufferCount;
+	}
+	
+	ALOGV("open(%u, %d, %d, %d, %d)", sampleRate, channelCount, format, bufferCount,mSessionId);
+	
+	if (mTrack) 
+		close();
 
-    }
-    ALOGV("open(%u, %d, %d, %d, %d)", sampleRate, channelCount, format, bufferCount,mSessionId);
-    if (mTrack) close();
-    int afSampleRate;
-    int afFrameCount;
-    int frameCount;
+	int afSampleRate;
+	int afFrameCount;
+	int frameCount;
 
-    if (AudioSystem::getOutputFrameCount(&afFrameCount, mStreamType) != NO_ERROR) {
-        return NO_INIT;
-    }
-    if (AudioSystem::getOutputSamplingRate(&afSampleRate, mStreamType) != NO_ERROR) {
-        return NO_INIT;
-    }
+	if (AudioSystem::getOutputFrameCount(&afFrameCount, mStreamType) != NO_ERROR) 
+	{
+		return NO_INIT;
+	}
+	if (AudioSystem::getOutputSamplingRate(&afSampleRate, mStreamType) != NO_ERROR) 
+	{
+		return NO_INIT;
+	}
 
-    frameCount = (sampleRate*afFrameCount*bufferCount)/afSampleRate;
+	frameCount = (sampleRate*afFrameCount*bufferCount)/afSampleRate;
 
-    AudioTrack *t;
-    if (mCallback != NULL) {
-        t = new AudioTrack(
-                mStreamType,
-                sampleRate,
-                format,
-                (channelCount == 2) ? AUDIO_CHANNEL_OUT_STEREO : AUDIO_CHANNEL_OUT_MONO,
-                frameCount,
-                0 /* flags */,
-                CallbackWrapper,
-                this,
-                0,
-                mSessionId);
-    } else {
-        t = new AudioTrack(
-                mStreamType,
-                sampleRate,
-                format,
-                (channelCount == 2) ? AUDIO_CHANNEL_OUT_STEREO : AUDIO_CHANNEL_OUT_MONO,
-                frameCount,
-                0,
-                NULL,
-                NULL,
-                0,
-                mSessionId);
-    }
+	AudioTrack *t;
+	if (mCallback != NULL) 
+	{
+		t = new AudioTrack(mStreamType,
+						sampleRate,
+						format,
+						(channelCount == 2) ? AUDIO_CHANNEL_OUT_STEREO : AUDIO_CHANNEL_OUT_MONO,
+						frameCount,
+						0 /* flags */,
+						CallbackWrapper,
+						this,
+						0,
+						mSessionId);
+	}
+	else 
+	{
+		t = new AudioTrack(mStreamType,
+						sampleRate,
+						format,
+						(channelCount == 2) ? AUDIO_CHANNEL_OUT_STEREO : AUDIO_CHANNEL_OUT_MONO,
+						frameCount,
+						0,
+						NULL,
+						NULL,
+						0,
+						mSessionId);
+	}
 
-    if ((t == 0) || (t->initCheck() != NO_ERROR)) {
-        ALOGE("Unable to create audio track");
-        delete t;
-        return NO_INIT;
-    }
+	if ((t == 0) || (t->initCheck() != NO_ERROR))
+	{
+		ALOGE("Unable to create audio track");
+		delete t;
+		return NO_INIT;
+	}
 
-    ALOGV("setVolume");
-    t->setVolume(mLeftVolume, mRightVolume);
+	ALOGV("setVolume");
+	t->setVolume(mLeftVolume, mRightVolume);
 
-    mMsecsPerFrame = 1.e3 / (float) sampleRate;
-    mTrack = t;
+	mMsecsPerFrame = 1.e3 / (float) sampleRate;
+	mTrack = t;
 
-    t->setAuxEffectSendLevel(mSendLevel);
-    return t->attachAuxEffect(mAuxEffectId);;
+	t->setAuxEffectSendLevel(mSendLevel);
+	return t->attachAuxEffect(mAuxEffectId);;
 }
 
 void MediaPlayerService::AudioOutput::start()
 {
-    ALOGV("start");
-    if (mTrack) {
-        mTrack->setVolume(mLeftVolume, mRightVolume);
-        mTrack->setAuxEffectSendLevel(mSendLevel);
-        mTrack->start();
-    }
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("start");
+	if (mTrack) 
+	{
+		mTrack->setVolume(mLeftVolume, mRightVolume);
+		mTrack->setAuxEffectSendLevel(mSendLevel);
+		mTrack->start();
+	}
 }
 
 
 
 ssize_t MediaPlayerService::AudioOutput::write(const void* buffer, size_t size)
 {
-    LOG_FATAL_IF(mCallback != NULL, "Don't call write if supplying a callback.");
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	LOG_FATAL_IF(mCallback != NULL, "Don't call write if supplying a callback.");
 
-    //ALOGV("write(%p, %u)", buffer, size);
-    if (mTrack) {
-        ssize_t ret = mTrack->write(buffer, size);
-        return ret;
-    }
-    return NO_INIT;
+	//ALOGV("write(%p, %u)", buffer, size);
+	if (mTrack) 
+	{
+		ssize_t ret = mTrack->write(buffer, size);
+		return ret;
+	}
+	return NO_INIT;
 }
 
 void MediaPlayerService::AudioOutput::stop()
 {
-    ALOGV("stop");
-    if (mTrack) mTrack->stop();
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("stop");
+	if (mTrack) mTrack->stop();
 }
 
 void MediaPlayerService::AudioOutput::flush()
 {
-    ALOGV("flush");
-    if (mTrack) mTrack->flush();
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("flush");
+	if (mTrack) mTrack->flush();
 }
 
 void MediaPlayerService::AudioOutput::pause()
 {
-    ALOGV("pause");
-    if (mTrack) mTrack->pause();
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("pause");
+	if (mTrack) mTrack->pause();
 }
 
 void MediaPlayerService::AudioOutput::close()
 {
-    ALOGV("close");
-    delete mTrack;
-    mTrack = 0;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("close");
+	delete mTrack;
+	mTrack = 0;
 }
 
 void MediaPlayerService::AudioOutput::setVolume(float left, float right)
 {
-    ALOGV("setVolume(%f, %f)", left, right);
-    mLeftVolume = left;
-    mRightVolume = right;
-    if (mTrack) {
-        mTrack->setVolume(left, right);
-    }
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("setVolume(%f, %f)", left, right);
+	mLeftVolume = left;
+	mRightVolume = right;
+	if (mTrack)
+	{
+		mTrack->setVolume(left, right);
+	}
 }
 
 status_t MediaPlayerService::AudioOutput::setAuxEffectSendLevel(float level)
 {
-    ALOGV("setAuxEffectSendLevel(%f)", level);
-    mSendLevel = level;
-    if (mTrack) {
-        return mTrack->setAuxEffectSendLevel(level);
-    }
-    return NO_ERROR;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("setAuxEffectSendLevel(%f)", level);
+	mSendLevel = level;
+	if (mTrack) 
+	{
+		return mTrack->setAuxEffectSendLevel(level);
+	}
+	return NO_ERROR;
 }
 
 status_t MediaPlayerService::AudioOutput::attachAuxEffect(int effectId)
 {
-    ALOGV("attachAuxEffect(%d)", effectId);
-    mAuxEffectId = effectId;
-    if (mTrack) {
-        return mTrack->attachAuxEffect(effectId);
-    }
-    return NO_ERROR;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("attachAuxEffect(%d)", effectId);
+	mAuxEffectId = effectId;
+	if (mTrack) 
+	{
+		return mTrack->attachAuxEffect(effectId);
+	}
+	return NO_ERROR;
 }
 
 // static
-void MediaPlayerService::AudioOutput::CallbackWrapper(
-        int event, void *cookie, void *info) {
-    //ALOGV("callbackwrapper");
-    if (event != AudioTrack::EVENT_MORE_DATA) {
-        return;
-    }
+void MediaPlayerService::AudioOutput::CallbackWrapper( int event, void *cookie, void *info) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	//ALOGV("callbackwrapper");
+	if (event != AudioTrack::EVENT_MORE_DATA)
+	{
+		return;
+	}
 
-    AudioOutput *me = (AudioOutput *)cookie;
-    AudioTrack::Buffer *buffer = (AudioTrack::Buffer *)info;
+	AudioOutput *me = (AudioOutput *)cookie;
+	AudioTrack::Buffer *buffer = (AudioTrack::Buffer *)info;
 
-    size_t actualSize = (*me->mCallback)(
-            me, buffer->raw, buffer->size, me->mCallbackCookie);
+	size_t actualSize = (*me->mCallback)(me, buffer->raw, buffer->size, me->mCallbackCookie);
 
-    if (actualSize == 0 && buffer->size > 0) {
-        // We've reached EOS but the audio track is not stopped yet,
-        // keep playing silence.
+	if (actualSize == 0 && buffer->size > 0) 
+	{
+		// We've reached EOS but the audio track is not stopped yet,
+		// keep playing silence.
 
-        memset(buffer->raw, 0, buffer->size);
-        actualSize = buffer->size;
-    }
+		memset(buffer->raw, 0, buffer->size);
+		actualSize = buffer->size;
+	}
 
-    buffer->size = actualSize;
+	buffer->size = actualSize;
 }
 
 int MediaPlayerService::AudioOutput::getSessionId()
 {
-    return mSessionId;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+    	return mSessionId;
 }
 
 #undef LOG_TAG
 #define LOG_TAG "AudioCache"
-MediaPlayerService::AudioCache::AudioCache(const char* name) :
-    mChannelCount(0), mFrameCount(1024), mSampleRate(0), mSize(0),
-    mError(NO_ERROR), mCommandComplete(false)
+MediaPlayerService::AudioCache::AudioCache(const char* name) : mChannelCount(0), mFrameCount(1024), mSampleRate(0), mSize(0), mError(NO_ERROR), mCommandComplete(false)
 {
-    // create ashmem heap
-    mHeap = new MemoryHeapBase(kDefaultHeapSize, 0, name);
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	// create ashmem heap
+	mHeap = new MemoryHeapBase(kDefaultHeapSize, 0, name);
 }
 
 uint32_t MediaPlayerService::AudioCache::latency () const
 {
-    return 0;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+    	return 0;
 }
 
 float MediaPlayerService::AudioCache::msecsPerFrame() const
 {
-    return mMsecsPerFrame;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+    	return mMsecsPerFrame;
 }
 
 status_t MediaPlayerService::AudioCache::getPosition(uint32_t *position)
 {
-    if (position == 0) return BAD_VALUE;
-    *position = mSize;
-    return NO_ERROR;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (position == 0) return BAD_VALUE;
+	*position = mSize;
+	return NO_ERROR;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct CallbackThread : public Thread {
-    CallbackThread(const wp<MediaPlayerBase::AudioSink> &sink,
-                   MediaPlayerBase::AudioSink::AudioCallback cb,
-                   void *cookie);
+struct CallbackThread : public Thread 
+{
+    	CallbackThread(const wp<MediaPlayerBase::AudioSink> &sink, MediaPlayerBase::AudioSink::AudioCallback cb, void *cookie);
 
 protected:
-    virtual ~CallbackThread();
+	virtual ~CallbackThread();
 
-    virtual bool threadLoop();
+	virtual bool threadLoop();
 
 private:
-    wp<MediaPlayerBase::AudioSink> mSink;
-    MediaPlayerBase::AudioSink::AudioCallback mCallback;
-    void *mCookie;
-    void *mBuffer;
-    size_t mBufferSize;
+	wp<MediaPlayerBase::AudioSink> mSink;
+	MediaPlayerBase::AudioSink::AudioCallback mCallback;
+	void *mCookie;
+	void *mBuffer;
+	size_t mBufferSize;
 
-    CallbackThread(const CallbackThread &);
-    CallbackThread &operator=(const CallbackThread &);
+	CallbackThread(const CallbackThread &);
+	CallbackThread &operator=(const CallbackThread &);
 };
 
-CallbackThread::CallbackThread(
-        const wp<MediaPlayerBase::AudioSink> &sink,
-        MediaPlayerBase::AudioSink::AudioCallback cb,
-        void *cookie)
-    : mSink(sink),
-      mCallback(cb),
-      mCookie(cookie),
-      mBuffer(NULL),
-      mBufferSize(0) {
+CallbackThread::CallbackThread(const wp<MediaPlayerBase::AudioSink> &sink, MediaPlayerBase::AudioSink::AudioCallback cb, void *cookie)
+								: mSink(sink),
+								mCallback(cb),
+								mCookie(cookie),
+								mBuffer(NULL),
+								mBufferSize(0) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
 }
 
-CallbackThread::~CallbackThread() {
-    if (mBuffer) {
-        free(mBuffer);
-        mBuffer = NULL;
-    }
+CallbackThread::~CallbackThread() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mBuffer) 
+	{
+		free(mBuffer);
+		mBuffer = NULL;
+	}
 }
 
-bool CallbackThread::threadLoop() {
-    sp<MediaPlayerBase::AudioSink> sink = mSink.promote();
-    if (sink == NULL) {
-        return false;
-    }
+bool CallbackThread::threadLoop() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	sp<MediaPlayerBase::AudioSink> sink = mSink.promote();
+	if (sink == NULL) 
+	{
+		return false;
+	}
 
-    if (mBuffer == NULL) {
-        mBufferSize = sink->bufferSize();
-        mBuffer = malloc(mBufferSize);
-    }
+	if (mBuffer == NULL)
+	{
+		mBufferSize = sink->bufferSize();
+		mBuffer = malloc(mBufferSize);
+	}
 
-    size_t actualSize =
-        (*mCallback)(sink.get(), mBuffer, mBufferSize, mCookie);
+	size_t actualSize = (*mCallback)(sink.get(), mBuffer, mBufferSize, mCookie);
 
-    if (actualSize > 0) {
-        sink->write(mBuffer, actualSize);
-    }
+	if (actualSize > 0) 
+	{
+		sink->write(mBuffer, actualSize);
+	}
 
-    return true;
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-status_t MediaPlayerService::AudioCache::open(
-        uint32_t sampleRate, int channelCount, int format, int bufferCount,
-        AudioCallback cb, void *cookie)
+status_t MediaPlayerService::AudioCache::open( uint32_t sampleRate, int channelCount, int format, int bufferCount, AudioCallback cb, void *cookie)
 {
-    ALOGV("open(%u, %d, %d, %d)", sampleRate, channelCount, format, bufferCount);
-    if (mHeap->getHeapID() < 0) {
-        return NO_INIT;
-    }
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("open(%u, %d, %d, %d)", sampleRate, channelCount, format, bufferCount);
+	if (mHeap->getHeapID() < 0) 
+	{
+		return NO_INIT;
+	}
 
-    mSampleRate = sampleRate;
-    mChannelCount = (uint16_t)channelCount;
-    mFormat = (uint16_t)format;
-    mMsecsPerFrame = 1.e3 / (float) sampleRate;
+	mSampleRate = sampleRate;
+	mChannelCount = (uint16_t)channelCount;
+	mFormat = (uint16_t)format;
+	mMsecsPerFrame = 1.e3 / (float) sampleRate;
 
-    if (cb != NULL) {
-        mCallbackThread = new CallbackThread(this, cb, cookie);
-    }
-    return NO_ERROR;
+	if (cb != NULL) 
+	{
+		mCallbackThread = new CallbackThread(this, cb, cookie);
+	}
+	return NO_ERROR;
 }
 
-void MediaPlayerService::AudioCache::start() {
-    if (mCallbackThread != NULL) {
-        mCallbackThread->run("AudioCache callback");
-    }
+void MediaPlayerService::AudioCache::start() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mCallbackThread != NULL) 
+	{
+		mCallbackThread->run("AudioCache callback");
+	}
 }
 
-void MediaPlayerService::AudioCache::stop() {
-    if (mCallbackThread != NULL) {
-        mCallbackThread->requestExitAndWait();
-    }
+void MediaPlayerService::AudioCache::stop() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mCallbackThread != NULL) 
+	{
+		mCallbackThread->requestExitAndWait();
+	}
 }
 
 ssize_t MediaPlayerService::AudioCache::write(const void* buffer, size_t size)
 {
-    ALOGV("write(%p, %u)", buffer, size);
-    if ((buffer == 0) || (size == 0)) return size;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("write(%p, %u)", buffer, size);
+	if ((buffer == 0) || (size == 0)) 
+		return size;
 
-    uint8_t* p = static_cast<uint8_t*>(mHeap->getBase());
-    if (p == NULL) return NO_INIT;
-    p += mSize;
-    ALOGV("memcpy(%p, %p, %u)", p, buffer, size);
-    if (mSize + size > mHeap->getSize()) {
-        ALOGE("Heap size overflow! req size: %d, max size: %d", (mSize + size), mHeap->getSize());
-        size = mHeap->getSize() - mSize;
-    }
-    memcpy(p, buffer, size);
-    mSize += size;
-    return size;
+	uint8_t* p = static_cast<uint8_t*>(mHeap->getBase());
+	if (p == NULL) 
+		return NO_INIT;
+	
+	p += mSize;
+	ALOGV("memcpy(%p, %p, %u)", p, buffer, size);
+	if (mSize + size > mHeap->getSize())
+	{
+		ALOGE("Heap size overflow! req size: %d, max size: %d", (mSize + size), mHeap->getSize());
+		size = mHeap->getSize() - mSize;
+	}
+	memcpy(p, buffer, size);
+	mSize += size;
+	return size;
 }
 
 // call with lock held
 status_t MediaPlayerService::AudioCache::wait()
 {
-    Mutex::Autolock lock(mLock);
-    while (!mCommandComplete) {
-        mSignal.wait(mLock);
-    }
-    mCommandComplete = false;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock lock(mLock);
+	while (!mCommandComplete) 
+	{
+		mSignal.wait(mLock);
+	}
+	mCommandComplete = false;
 
-    if (mError == NO_ERROR) {
-        ALOGV("wait - success");
-    } else {
-        ALOGV("wait - error");
-    }
-    return mError;
+	if (mError == NO_ERROR)
+	{
+		ALOGV("wait - success");
+	} 
+	else 
+	{
+		ALOGV("wait - error");
+	}
+	return mError;
 }
 
-void MediaPlayerService::AudioCache::notify(
-        void* cookie, int msg, int ext1, int ext2, const Parcel *obj)
+void MediaPlayerService::AudioCache::notify(void* cookie, int msg, int ext1, int ext2, const Parcel *obj)
 {
-    ALOGV("notify(%p, %d, %d, %d)", cookie, msg, ext1, ext2);
-    AudioCache* p = static_cast<AudioCache*>(cookie);
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	ALOGV("notify(%p, %d, %d, %d)", cookie, msg, ext1, ext2);
+	AudioCache* p = static_cast<AudioCache*>(cookie);
 
-    // ignore buffering messages
-    switch (msg)
-    {
-    case MEDIA_ERROR:
-        ALOGE("Error %d, %d occurred", ext1, ext2);
-        p->mError = ext1;
-        break;
-    case MEDIA_PREPARED:
-        ALOGV("prepared");
-        break;
-    case MEDIA_PLAYBACK_COMPLETE:
-        ALOGV("playback complete");
-        break;
-    default:
-        ALOGV("ignored");
-        return;
-    }
+	// ignore buffering messages
+	switch (msg)
+	{
+		case MEDIA_ERROR:
+			ALOGE("Error %d, %d occurred", ext1, ext2);
+			p->mError = ext1;
+			break;
+		case MEDIA_PREPARED:
+			ALOGV("prepared");
+			break;
+		case MEDIA_PLAYBACK_COMPLETE:
+			ALOGV("playback complete");
+			break;
+		default:
+			ALOGV("ignored");
+			return;
+	}
 
-    // wake up thread
-    Mutex::Autolock lock(p->mLock);
-    p->mCommandComplete = true;
-    p->mSignal.signal();
+	// wake up thread
+	Mutex::Autolock lock(p->mLock);
+	p->mCommandComplete = true;
+	p->mSignal.signal();
 }
 
 int MediaPlayerService::AudioCache::getSessionId()
 {
-    return 0;
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+    	return 0;
 }
 
 void MediaPlayerService::addBatteryData(uint32_t params)
 {
-    Mutex::Autolock lock(mLock);
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock lock(mLock);
 
-    int32_t time = systemTime() / 1000000L;
+	int32_t time = systemTime() / 1000000L;
 
-    // change audio output devices. This notification comes from AudioFlinger
-    if ((params & kBatteryDataSpeakerOn)
-            || (params & kBatteryDataOtherAudioDeviceOn)) {
+	// change audio output devices. This notification comes from AudioFlinger
+	if ((params & kBatteryDataSpeakerOn) || (params & kBatteryDataOtherAudioDeviceOn))
+	{
+		int deviceOn[NUM_AUDIO_DEVICES];
+		for (int i = 0; i < NUM_AUDIO_DEVICES; i++) 
+		{
+			deviceOn[i] = 0;
+		}
 
-        int deviceOn[NUM_AUDIO_DEVICES];
-        for (int i = 0; i < NUM_AUDIO_DEVICES; i++) {
-            deviceOn[i] = 0;
-        }
+		if ((params & kBatteryDataSpeakerOn)&& (params & kBatteryDataOtherAudioDeviceOn))
+		{
+			deviceOn[SPEAKER_AND_OTHER] = 1;
+		} 
+		else if (params & kBatteryDataSpeakerOn) 
+		{
+			deviceOn[SPEAKER] = 1;
+		} 
+		else 
+		{
+			deviceOn[OTHER_AUDIO_DEVICE] = 1;
+		}
 
-        if ((params & kBatteryDataSpeakerOn)
-                && (params & kBatteryDataOtherAudioDeviceOn)) {
-            deviceOn[SPEAKER_AND_OTHER] = 1;
-        } else if (params & kBatteryDataSpeakerOn) {
-            deviceOn[SPEAKER] = 1;
-        } else {
-            deviceOn[OTHER_AUDIO_DEVICE] = 1;
-        }
+		for (int i = 0; i < NUM_AUDIO_DEVICES; i++) 
+		{
+			if (mBatteryAudio.deviceOn[i] != deviceOn[i])
+			{
+				if (mBatteryAudio.refCount > 0) 
+				{ // if playing audio
+					if (!deviceOn[i]) 
+					{
+						mBatteryAudio.lastTime[i] += time;
+						mBatteryAudio.totalTime[i] += mBatteryAudio.lastTime[i];
+						mBatteryAudio.lastTime[i] = 0;
+					} 
+					else 
+					{
+						mBatteryAudio.lastTime[i] = 0 - time;
+					}
+				}
 
-        for (int i = 0; i < NUM_AUDIO_DEVICES; i++) {
-            if (mBatteryAudio.deviceOn[i] != deviceOn[i]){
+				mBatteryAudio.deviceOn[i] = deviceOn[i];
+			}
+		}
+		return;
+	}
 
-                if (mBatteryAudio.refCount > 0) { // if playing audio
-                    if (!deviceOn[i]) {
-                        mBatteryAudio.lastTime[i] += time;
-                        mBatteryAudio.totalTime[i] += mBatteryAudio.lastTime[i];
-                        mBatteryAudio.lastTime[i] = 0;
-                    } else {
-                        mBatteryAudio.lastTime[i] = 0 - time;
-                    }
-                }
+	// an sudio stream is started
+	if (params & kBatteryDataAudioFlingerStart) 
+	{
+		// record the start time only if currently no other audio
+		// is being played
+		if (mBatteryAudio.refCount == 0) 
+		{
+			for (int i = 0; i < NUM_AUDIO_DEVICES; i++) 
+			{
+				if (mBatteryAudio.deviceOn[i]) 
+				{
+					mBatteryAudio.lastTime[i] -= time;
+				}
+			}
+		}
 
-                mBatteryAudio.deviceOn[i] = deviceOn[i];
-            }
-        }
-        return;
-    }
+		mBatteryAudio.refCount ++;
+		return;
+	}
+	else if (params & kBatteryDataAudioFlingerStop) 
+	{
+		if (mBatteryAudio.refCount <= 0) 
+		{
+			ALOGW("Battery track warning: refCount is <= 0");
+			return;
+		}
 
-    // an sudio stream is started
-    if (params & kBatteryDataAudioFlingerStart) {
-        // record the start time only if currently no other audio
-        // is being played
-        if (mBatteryAudio.refCount == 0) {
-            for (int i = 0; i < NUM_AUDIO_DEVICES; i++) {
-                if (mBatteryAudio.deviceOn[i]) {
-                    mBatteryAudio.lastTime[i] -= time;
-                }
-            }
-        }
+		// record the stop time only if currently this is the only
+		// audio being played
+		if (mBatteryAudio.refCount == 1) 
+		{
+			for (int i = 0; i < NUM_AUDIO_DEVICES; i++) 
+			{
+				if (mBatteryAudio.deviceOn[i]) 
+				{
+					mBatteryAudio.lastTime[i] += time;
+					mBatteryAudio.totalTime[i] += mBatteryAudio.lastTime[i];
+					mBatteryAudio.lastTime[i] = 0;
+				}
+			}
+		}
 
-        mBatteryAudio.refCount ++;
-        return;
+		mBatteryAudio.refCount --;
+		return;
+	}
 
-    } else if (params & kBatteryDataAudioFlingerStop) {
-        if (mBatteryAudio.refCount <= 0) {
-            ALOGW("Battery track warning: refCount is <= 0");
-            return;
-        }
+	int uid = IPCThreadState::self()->getCallingUid();
+	if (uid == AID_MEDIA)
+	{
+		return;
+	}
+	int index = mBatteryData.indexOfKey(uid);
 
-        // record the stop time only if currently this is the only
-        // audio being played
-        if (mBatteryAudio.refCount == 1) {
-            for (int i = 0; i < NUM_AUDIO_DEVICES; i++) {
-                if (mBatteryAudio.deviceOn[i]) {
-                    mBatteryAudio.lastTime[i] += time;
-                    mBatteryAudio.totalTime[i] += mBatteryAudio.lastTime[i];
-                    mBatteryAudio.lastTime[i] = 0;
-                }
-            }
-        }
+	if (index < 0) 
+	{ // create a new entry for this UID
+		BatteryUsageInfo info;
+		info.audioTotalTime = 0;
+		info.videoTotalTime = 0;
+		info.audioLastTime = 0;
+		info.videoLastTime = 0;
+		info.refCount = 0;
 
-        mBatteryAudio.refCount --;
-        return;
-    }
+		if (mBatteryData.add(uid, info) == NO_MEMORY) 
+		{
+			ALOGE("Battery track error: no memory for new app");
+			return;
+		}
+	}
 
-    int uid = IPCThreadState::self()->getCallingUid();
-    if (uid == AID_MEDIA) {
-        return;
-    }
-    int index = mBatteryData.indexOfKey(uid);
+	BatteryUsageInfo &info = mBatteryData.editValueFor(uid);
 
-    if (index < 0) { // create a new entry for this UID
-        BatteryUsageInfo info;
-        info.audioTotalTime = 0;
-        info.videoTotalTime = 0;
-        info.audioLastTime = 0;
-        info.videoLastTime = 0;
-        info.refCount = 0;
+	if (params & kBatteryDataCodecStarted) 
+	{
+		if (params & kBatteryDataTrackAudio)
+		{
+			info.audioLastTime -= time;
+			info.refCount ++;
+		}
+		if (params & kBatteryDataTrackVideo)
+		{
+			info.videoLastTime -= time;
+			info.refCount ++;
+		}
+	}
+	else
+	{
+		if (info.refCount == 0)
+		{
+			ALOGW("Battery track warning: refCount is already 0");
+			return;
+		} 
+		else if (info.refCount < 0) 
+		{
+			ALOGE("Battery track error: refCount < 0");
+			mBatteryData.removeItem(uid);
+			return;
+		}
 
-        if (mBatteryData.add(uid, info) == NO_MEMORY) {
-            ALOGE("Battery track error: no memory for new app");
-            return;
-        }
-    }
+		if (params & kBatteryDataTrackAudio)
+		{
+			info.audioLastTime += time;
+			info.refCount --;
+		}
+		
+		if (params & kBatteryDataTrackVideo) 
+		{
+			info.videoLastTime += time;
+			info.refCount --;
+		}
 
-    BatteryUsageInfo &info = mBatteryData.editValueFor(uid);
-
-    if (params & kBatteryDataCodecStarted) {
-        if (params & kBatteryDataTrackAudio) {
-            info.audioLastTime -= time;
-            info.refCount ++;
-        }
-        if (params & kBatteryDataTrackVideo) {
-            info.videoLastTime -= time;
-            info.refCount ++;
-        }
-    } else {
-        if (info.refCount == 0) {
-            ALOGW("Battery track warning: refCount is already 0");
-            return;
-        } else if (info.refCount < 0) {
-            ALOGE("Battery track error: refCount < 0");
-            mBatteryData.removeItem(uid);
-            return;
-        }
-
-        if (params & kBatteryDataTrackAudio) {
-            info.audioLastTime += time;
-            info.refCount --;
-        }
-        if (params & kBatteryDataTrackVideo) {
-            info.videoLastTime += time;
-            info.refCount --;
-        }
-
-        // no stream is being played by this UID
-        if (info.refCount == 0) {
-            info.audioTotalTime += info.audioLastTime;
-            info.audioLastTime = 0;
-            info.videoTotalTime += info.videoLastTime;
-            info.videoLastTime = 0;
-        }
-    }
+		// no stream is being played by this UID
+		if (info.refCount == 0) 
+		{
+			info.audioTotalTime += info.audioLastTime;
+			info.audioLastTime = 0;
+			info.videoTotalTime += info.videoLastTime;
+			info.videoLastTime = 0;
+		}
+	}
 }
 
-status_t MediaPlayerService::pullBatteryData(Parcel* reply) {
-    Mutex::Autolock lock(mLock);
+status_t MediaPlayerService::pullBatteryData(Parcel* reply) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock lock(mLock);
 
-    // audio output devices usage
-    int32_t time = systemTime() / 1000000L; //in ms
-    int32_t totalTime;
+	// audio output devices usage
+	int32_t time = systemTime() / 1000000L; //in ms
+	int32_t totalTime;
 
-    for (int i = 0; i < NUM_AUDIO_DEVICES; i++) {
-        totalTime = mBatteryAudio.totalTime[i];
+	for (int i = 0; i < NUM_AUDIO_DEVICES; i++) 
+	{
+		totalTime = mBatteryAudio.totalTime[i];
 
-        if (mBatteryAudio.deviceOn[i]
-            && (mBatteryAudio.lastTime[i] != 0)) {
-                int32_t tmpTime = mBatteryAudio.lastTime[i] + time;
-                totalTime += tmpTime;
-        }
+		if (mBatteryAudio.deviceOn[i] && (mBatteryAudio.lastTime[i] != 0)) 
+		{
+			int32_t tmpTime = mBatteryAudio.lastTime[i] + time;
+			totalTime += tmpTime;
+		}
 
-        reply->writeInt32(totalTime);
-        // reset the total time
-        mBatteryAudio.totalTime[i] = 0;
-   }
+		reply->writeInt32(totalTime);
+		// reset the total time
+		mBatteryAudio.totalTime[i] = 0;
+	}
 
-    // codec usage
-    BatteryUsageInfo info;
-    int size = mBatteryData.size();
+	// codec usage
+	BatteryUsageInfo info;
+	int size = mBatteryData.size();
 
-    reply->writeInt32(size);
-    int i = 0;
+	reply->writeInt32(size);
+	int i = 0;
 
-    while (i < size) {
-        info = mBatteryData.valueAt(i);
+	while (i < size) 
+	{
+		info = mBatteryData.valueAt(i);
 
-        reply->writeInt32(mBatteryData.keyAt(i)); //UID
-        reply->writeInt32(info.audioTotalTime);
-        reply->writeInt32(info.videoTotalTime);
+		reply->writeInt32(mBatteryData.keyAt(i)); //UID
+		reply->writeInt32(info.audioTotalTime);
+		reply->writeInt32(info.videoTotalTime);
 
-        info.audioTotalTime = 0;
-        info.videoTotalTime = 0;
+		info.audioTotalTime = 0;
+		info.videoTotalTime = 0;
 
-        // remove the UID entry where no stream is being played
-        if (info.refCount <= 0) {
-            mBatteryData.removeItemsAt(i);
-            size --;
-            i --;
-        }
-        i++;
-    }
-    return NO_ERROR;
+		// remove the UID entry where no stream is being played
+		if (info.refCount <= 0)
+		{
+			mBatteryData.removeItemsAt(i);
+			size --;
+			i --;
+		}
+		i++;
+	}
+	return NO_ERROR;
 }
 } // namespace android

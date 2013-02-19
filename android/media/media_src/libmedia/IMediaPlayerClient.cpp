@@ -64,7 +64,8 @@ status_t BnMediaPlayerClient::onTransact(uint32_t code, const Parcel& data, Parc
 		1、
 		
 	说明:
-		1、
+		1、参见BnMediaPlayerService::onTransact()  的说明
+			类MediaPlayer  继承的BnMediaPlayerClient  类，所以此函数中的很多方法应该调用的是MediaPlayer  类的方法
 */
 	switch(code) 
 	{
@@ -80,7 +81,7 @@ status_t BnMediaPlayerClient::onTransact(uint32_t code, const Parcel& data, Parc
 					obj.appendFrom(const_cast<Parcel *>(&data), data.dataPosition(), data.dataAvail());
 				}
 
-				notify(msg, ext1, ext2, &obj);
+				notify(msg, ext1, ext2, &obj); /* 见MediaPlayer::notify()  方法*/
 				return NO_ERROR;
 			} 
 			break;

@@ -135,6 +135,23 @@ IMPLEMENT_META_INTERFACE(MediaPlayerService, "android.media.IMediaPlayerService"
 
 status_t BnMediaPlayerService::onTransact(uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
 {
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、此函数为BnMediaPlayerService  的onTransact  方法，即应该为主线程的Looper   调用的函数，所以
+			多媒体的本地服务端，即BnMediaPlayerService  通过此方法接收代理即BpMediaPlayerService  发送
+			过来的命令
+
+			接收到命令后会对相应命令进行处理，然后再将相应返回返回
+
+			此函数中调用的方法多数为MediaPlayerService  类的方法，因为MediaPlayerService  类是继承BnMediaPlayerService
+			类的，如函数中调用create  函数，就应该是MediaPlayerService::create
+*/
 	switch(code)
 	{
 		case CREATE: 
@@ -144,7 +161,7 @@ status_t BnMediaPlayerService::onTransact(uint32_t code, const Parcel& data, Par
 				sp<IMediaPlayerClient> client =
 				interface_cast<IMediaPlayerClient>(data.readStrongBinder());
 				int audioSessionId = data.readInt32();
-				sp<IMediaPlayer> player = create(pid, client, audioSessionId);
+				sp<IMediaPlayer> player = create(pid, client, audioSessionId); /* 见MediaPlayerService::create()  方法*/
 				reply->writeStrongBinder(player->asBinder());
 				return NO_ERROR;
 			} 
@@ -175,7 +192,7 @@ status_t BnMediaPlayerService::onTransact(uint32_t code, const Parcel& data, Par
 				uint32_t sampleRate;
 				int numChannels;
 				int format;
-				sp<IMemory> player = decode(fd, offset, length, &sampleRate, &numChannels, &format);
+				sp<IMemory> player = decode(fd, offset, length, &sampleRate, &numChannels, &format); /* 见MediaPlayerService::decode()  方法*/
 				reply->writeInt32(sampleRate);
 				reply->writeInt32(numChannels);
 				reply->writeInt32(format);
