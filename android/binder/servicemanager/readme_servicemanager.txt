@@ -1,0 +1,1 @@
+dir = android\source\frameworks\base\cmds\servicemanager
