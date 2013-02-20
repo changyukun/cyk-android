@@ -375,8 +375,7 @@ sp<IMediaPlayer> MediaPlayerService::create(pid_t pid, const sp<IMediaPlayerClie
 
 	sp<Client> c = new Client( this, pid, connId, client, audioSessionId, IPCThreadState::self()->getCallingUid());
 
-	ALOGV("Create new client(%d) from pid %d, uid %d, ", connId, pid,
-	IPCThreadState::self()->getCallingUid());
+	ALOGV("Create new client(%d) from pid %d, uid %d, ", connId, pid, IPCThreadState::self()->getCallingUid());
 
 	wp<Client> w = c;
 	{
