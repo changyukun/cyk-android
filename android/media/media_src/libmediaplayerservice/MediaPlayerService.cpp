@@ -893,7 +893,7 @@ static sp<MediaPlayerBase> createPlayer(player_type playerType, void* cookie, no
 		1、
 		
 	说明:
-		1、
+		1、此函数为真正的创建各个播放器，所有的播放器都必须从类MediaPlayerInterface  继承，见下面几个播放器类的定义都是
 */
 	sp<MediaPlayerBase> p;
 	switch (playerType) 
