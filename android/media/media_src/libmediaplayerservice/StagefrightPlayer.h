@@ -65,7 +65,7 @@ public:
     virtual status_t dump(int fd, const Vector<String16> &args) const;
 
 private:
-    AwesomePlayer *mPlayer;
+    AwesomePlayer *mPlayer; /* 见构造函数(new AwesomePlayer) 对其进行的赋值*/
 
     StagefrightPlayer(const StagefrightPlayer &);
     StagefrightPlayer &operator=(const StagefrightPlayer &);
