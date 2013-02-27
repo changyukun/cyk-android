@@ -159,23 +159,23 @@ private:
 	SystemTimeSource mSystemTimeSource;
 	TimeSource *mTimeSource;
 
-	String8 mUri;
+	String8 mUri; /* 见方法AwesomePlayer::setDataSource_l  中对其进行的赋值*/
 	KeyedVector<String8, String8> mUriHeaders;
 
 	sp<DataSource> mFileSource;
 
-	sp<MediaSource> mVideoTrack;
+	sp<MediaSource> mVideoTrack; /* 见方法AwesomePlayer::setDataSource_l 中调用AwesomePlayer::setVideoSource  对其进行设定*/
 	sp<MediaSource> mVideoSource; /* 见方法AwesomePlayer::onPrepareAsyncEvent()  中的说明*/
 	sp<AwesomeRenderer> mVideoRenderer;
 	bool mVideoRendererIsPreview;
 
-	sp<MediaSource> mAudioTrack;
+	sp<MediaSource> mAudioTrack; /* 见方法AwesomePlayer::setDataSource_l 中调用AwesomePlayer::setAudioSource  对其进行设定*/
 	sp<MediaSource> mAudioSource;
 	AudioPlayer *mAudioPlayer;
 	int64_t mDurationUs;
 
-	int32_t mDisplayWidth;
-	int32_t mDisplayHeight;
+	int32_t mDisplayWidth; /* 见方法AwesomePlayer::setDataSource_l  对其赋值*/
+	int32_t mDisplayHeight; /* 见方法AwesomePlayer::setDataSource_l  对其赋值*/
 
 	uint32_t mFlags;
 	uint32_t mExtractorFlags;

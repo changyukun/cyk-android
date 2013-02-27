@@ -41,91 +41,158 @@
 
 namespace android {
 
-sp<MetaData> MediaExtractor::getMetaData() {
-    return new MetaData;
+sp<MetaData> MediaExtractor::getMetaData()
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	return new MetaData;
 }
 
-uint32_t MediaExtractor::flags() const {
-    return CAN_SEEK_BACKWARD | CAN_SEEK_FORWARD | CAN_PAUSE | CAN_SEEK;
+uint32_t MediaExtractor::flags() const 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	return CAN_SEEK_BACKWARD | CAN_SEEK_FORWARD | CAN_PAUSE | CAN_SEEK;
 }
 
 // static
-sp<MediaExtractor> MediaExtractor::Create(
-        const sp<DataSource> &source, const char *mime) {
-    sp<AMessage> meta;
+sp<MediaExtractor> MediaExtractor::Create(const sp<DataSource> &source, const char *mime) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、此函数相当于创建一个demxer
+		2、实质此函数会根据source  的不同来创建不同的extractor，即demuxer，如mp3、mpeg4 等等不同
+			类型都是会创建不同的extractor  实例，但是这些不同类型的extractor  实例类都是继承了
+			MediaExtractor  类的，所以此函数返回的真正的实例是各种不同的extractor  实例，如mpeg4  类型
+			的源返回的MPEG4Extractor 实例，mp3 类型的源返回的MP3Extractor  实例
+*/
+	sp<AMessage> meta;
 
-    String8 tmp;
-    if (mime == NULL) {
-        float confidence;
-        if (!source->sniff(&tmp, &confidence, &meta)) {
-            ALOGV("FAILED to autodetect media content.");
+	String8 tmp;
+	if (mime == NULL)
+	{
+		float confidence;
+		if (!source->sniff(&tmp, &confidence, &meta)) 
+		{
+			ALOGV("FAILED to autodetect media content.");
 
-            return NULL;
-        }
+			return NULL;
+		}
 
-        mime = tmp.string();
-        ALOGV("Autodetected media content as '%s' with confidence %.2f",
-             mime, confidence);
-    }
+		mime = tmp.string();
+		ALOGV("Autodetected media content as '%s' with confidence %.2f", mime, confidence);
+	}
 
-    bool isDrm = false;
-    // DRM MIME type syntax is "drm+type+original" where
-    // type is "es_based" or "container_based" and
-    // original is the content's cleartext MIME type
-    if (!strncmp(mime, "drm+", 4)) {
-        const char *originalMime = strchr(mime+4, '+');
-        if (originalMime == NULL) {
-            // second + not found
-            return NULL;
-        }
-        ++originalMime;
-        if (!strncmp(mime, "drm+es_based+", 13)) {
-            // DRMExtractor sets container metadata kKeyIsDRM to 1
-            return new DRMExtractor(source, originalMime);
-        } else if (!strncmp(mime, "drm+container_based+", 20)) {
-            mime = originalMime;
-            isDrm = true;
-        } else {
-            return NULL;
-        }
-    }
+	bool isDrm = false;
+	// DRM MIME type syntax is "drm+type+original" where
+	// type is "es_based" or "container_based" and
+	// original is the content's cleartext MIME type
+	if (!strncmp(mime, "drm+", 4)) 
+	{
+		const char *originalMime = strchr(mime+4, '+');
+		if (originalMime == NULL) 
+		{
+			// second + not found
+			return NULL;
+		}
+		++originalMime;
+		if (!strncmp(mime, "drm+es_based+", 13))
+		{
+			// DRMExtractor sets container metadata kKeyIsDRM to 1
+			return new DRMExtractor(source, originalMime);
+		} 
+		else if (!strncmp(mime, "drm+container_based+", 20)) 
+		{
+			mime = originalMime;
+			isDrm = true;
+		} 
+		else 
+		{
+			return NULL;
+		}
+	}
 
-    MediaExtractor *ret = NULL;
-    if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MPEG4)
-            || !strcasecmp(mime, "audio/mp4")) {
-        ret = new MPEG4Extractor(source);
-    } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_MPEG)) {
-        ret = new MP3Extractor(source, meta);
-    } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AMR_NB)
-            || !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AMR_WB)) {
-        ret = new AMRExtractor(source);
-    } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_FLAC)) {
-        ret = new FLACExtractor(source);
-    } else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_WAV)) {
-        ret = new WAVExtractor(source);
-    } else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_OGG)) {
-        ret = new OggExtractor(source);
-    } else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MATROSKA)) {
-        ret = new MatroskaExtractor(source);
-    } else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MPEG2TS)) {
-        ret = new MPEG2TSExtractor(source);
-    } else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_WVM)) {
-        ret = new WVMExtractor(source);
-    } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AAC_ADTS)) {
-        ret = new AACExtractor(source);
-    } else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MPEG2PS)) {
-        ret = new MPEG2PSExtractor(source);
-    }
+	MediaExtractor *ret = NULL;
+	if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MPEG4) || !strcasecmp(mime, "audio/mp4")) 
+	{
+		ret = new MPEG4Extractor(source);
+	} 
+	else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_MPEG)) 
+	{
+		ret = new MP3Extractor(source, meta);
+	} 
+	else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AMR_NB)|| !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AMR_WB))
+	{
+		ret = new AMRExtractor(source);
+	} 
+	else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_FLAC))
+	{
+		ret = new FLACExtractor(source);
+	} 
+	else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_WAV))
+	{
+		ret = new WAVExtractor(source);
+	}
+	else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_OGG))
+	{
+		ret = new OggExtractor(source);
+	}
+	else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MATROSKA))
+	{
+		ret = new MatroskaExtractor(source);
+	} 
+	else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MPEG2TS)) 
+	{
+		ret = new MPEG2TSExtractor(source);
+	}
+	else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_WVM)) 
+	{
+		ret = new WVMExtractor(source);
+	} 
+	else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AAC_ADTS)) 
+	{
+		ret = new AACExtractor(source);
+	} 
+	else if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MPEG2PS))
+	{
+		ret = new MPEG2PSExtractor(source);
+	}
 
-    if (ret != NULL) {
-       if (isDrm) {
-           ret->setDrmFlag(true);
-       } else {
-           ret->setDrmFlag(false);
-       }
-    }
+	if (ret != NULL) 
+	{
+		if (isDrm) 
+		{
+			ret->setDrmFlag(true);
+		}
+		else 
+		{
+			ret->setDrmFlag(false);
+		}
+	}
 
-    return ret;
+	return ret;
 }
 
 }  // namespace android

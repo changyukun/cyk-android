@@ -32,123 +32,234 @@
 
 namespace android {
 
-HTTPBase::HTTPBase()
-    : mNumBandwidthHistoryItems(0),
-      mTotalTransferTimeUs(0),
-      mTotalTransferBytes(0),
-      mPrevBandwidthMeasureTimeUs(0),
-      mPrevEstimatedBandWidthKbps(0),
-      mBandWidthCollectFreqMs(5000),
-      mUIDValid(false),
-      mUID(0) {
+HTTPBase::HTTPBase()	: mNumBandwidthHistoryItems(0),
+						mTotalTransferTimeUs(0),
+						mTotalTransferBytes(0),
+						mPrevBandwidthMeasureTimeUs(0),
+						mPrevEstimatedBandWidthKbps(0),
+						mBandWidthCollectFreqMs(5000),
+						mUIDValid(false),
+						mUID(0) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
 }
 
 // static
-sp<HTTPBase> HTTPBase::Create(uint32_t flags) {
+sp<HTTPBase> HTTPBase::Create(uint32_t flags) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
 #if CHROMIUM_AVAILABLE
-        return new ChromiumHTTPDataSource(flags);
+	return new ChromiumHTTPDataSource(flags);
 #endif
-    {
-        TRESPASS();
+	{
+		TRESPASS();
 
-        return NULL;
-    }
+		return NULL;
+	}
 }
 
-void HTTPBase::addBandwidthMeasurement(
-        size_t numBytes, int64_t delayUs) {
-    Mutex::Autolock autoLock(mLock);
+void HTTPBase::addBandwidthMeasurement(size_t numBytes, int64_t delayUs)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    BandwidthEntry entry;
-    entry.mDelayUs = delayUs;
-    entry.mNumBytes = numBytes;
-    mTotalTransferTimeUs += delayUs;
-    mTotalTransferBytes += numBytes;
+	BandwidthEntry entry;
+	entry.mDelayUs = delayUs;
+	entry.mNumBytes = numBytes;
+	mTotalTransferTimeUs += delayUs;
+	mTotalTransferBytes += numBytes;
 
-    mBandwidthHistory.push_back(entry);
-    if (++mNumBandwidthHistoryItems > 100) {
-        BandwidthEntry *entry = &*mBandwidthHistory.begin();
-        mTotalTransferTimeUs -= entry->mDelayUs;
-        mTotalTransferBytes -= entry->mNumBytes;
-        mBandwidthHistory.erase(mBandwidthHistory.begin());
-        --mNumBandwidthHistoryItems;
+	mBandwidthHistory.push_back(entry);
+	if (++mNumBandwidthHistoryItems > 100) 
+	{
+		BandwidthEntry *entry = &*mBandwidthHistory.begin();
+		mTotalTransferTimeUs -= entry->mDelayUs;
+		mTotalTransferBytes -= entry->mNumBytes;
+		mBandwidthHistory.erase(mBandwidthHistory.begin());
+		--mNumBandwidthHistoryItems;
 
-        int64_t timeNowUs = ALooper::GetNowUs();
-        if (timeNowUs - mPrevBandwidthMeasureTimeUs >=
-                mBandWidthCollectFreqMs * 1000LL) {
-
-            if (mPrevBandwidthMeasureTimeUs != 0) {
-                mPrevEstimatedBandWidthKbps =
-                    (mTotalTransferBytes * 8E3 / mTotalTransferTimeUs);
-            }
-            mPrevBandwidthMeasureTimeUs = timeNowUs;
-        }
-    }
+		int64_t timeNowUs = ALooper::GetNowUs();
+		if (timeNowUs - mPrevBandwidthMeasureTimeUs >=  mBandWidthCollectFreqMs * 1000LL) 
+		{
+			if (mPrevBandwidthMeasureTimeUs != 0) 
+			{
+				mPrevEstimatedBandWidthKbps = (mTotalTransferBytes * 8E3 / mTotalTransferTimeUs);
+			}
+			mPrevBandwidthMeasureTimeUs = timeNowUs;
+		}
+	}
 
 }
 
-bool HTTPBase::estimateBandwidth(int32_t *bandwidth_bps) {
-    Mutex::Autolock autoLock(mLock);
+bool HTTPBase::estimateBandwidth(int32_t *bandwidth_bps) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    if (mNumBandwidthHistoryItems < 2) {
-        return false;
-    }
+	if (mNumBandwidthHistoryItems < 2)
+	{
+		return false;
+	}
 
-    *bandwidth_bps = ((double)mTotalTransferBytes * 8E6 / mTotalTransferTimeUs);
+	*bandwidth_bps = ((double)mTotalTransferBytes * 8E6 / mTotalTransferTimeUs);
 
-    return true;
+	return true;
 }
 
-status_t HTTPBase::getEstimatedBandwidthKbps(int32_t *kbps) {
-    Mutex::Autolock autoLock(mLock);
-    *kbps = mPrevEstimatedBandWidthKbps;
-    return OK;
+status_t HTTPBase::getEstimatedBandwidthKbps(int32_t *kbps) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
+	*kbps = mPrevEstimatedBandWidthKbps;
+	return OK;
 }
 
-status_t HTTPBase::setBandwidthStatCollectFreq(int32_t freqMs) {
-    Mutex::Autolock autoLock(mLock);
+status_t HTTPBase::setBandwidthStatCollectFreq(int32_t freqMs) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    if (freqMs < kMinBandwidthCollectFreqMs
-            || freqMs > kMaxBandwidthCollectFreqMs) {
+	if (freqMs < kMinBandwidthCollectFreqMs  || freqMs > kMaxBandwidthCollectFreqMs)
+	{
+		ALOGE("frequency (%d ms) is out of range [1000, 60000]", freqMs);
+		return BAD_VALUE;
+	}
 
-        ALOGE("frequency (%d ms) is out of range [1000, 60000]", freqMs);
-        return BAD_VALUE;
-    }
-
-    ALOGI("frequency set to %d ms", freqMs);
-    mBandWidthCollectFreqMs = freqMs;
-    return OK;
+	ALOGI("frequency set to %d ms", freqMs);
+	mBandWidthCollectFreqMs = freqMs;
+	return OK;
 }
 
-void HTTPBase::setUID(uid_t uid) {
-    mUIDValid = true;
-    mUID = uid;
+void HTTPBase::setUID(uid_t uid)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	mUIDValid = true;
+	mUID = uid;
 }
 
-bool HTTPBase::getUID(uid_t *uid) const {
-    if (!mUIDValid) {
-        return false;
-    }
+bool HTTPBase::getUID(uid_t *uid) const
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (!mUIDValid) 
+	{
+		return false;
+	}
 
-    *uid = mUID;
+	*uid = mUID;
 
-    return true;
+	return true;
 }
 
 // static
-void HTTPBase::RegisterSocketUserTag(int sockfd, uid_t uid, uint32_t kTag) {
-    int res = qtaguid_tagSocket(sockfd, kTag, uid);
-    if (res != 0) {
-        ALOGE("Failed tagging socket %d for uid %d (My UID=%d)", sockfd, uid, geteuid());
-    }
+void HTTPBase::RegisterSocketUserTag(int sockfd, uid_t uid, uint32_t kTag) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	int res = qtaguid_tagSocket(sockfd, kTag, uid);
+	if (res != 0) 
+	{
+		ALOGE("Failed tagging socket %d for uid %d (My UID=%d)", sockfd, uid, geteuid());
+	}
 }
 
 // static
-void HTTPBase::UnRegisterSocketUserTag(int sockfd) {
-    int res = qtaguid_untagSocket(sockfd);
-    if (res != 0) {
-        ALOGE("Failed untagging socket %d (My UID=%d)", sockfd, geteuid());
-    }
+void HTTPBase::UnRegisterSocketUserTag(int sockfd)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	int res = qtaguid_untagSocket(sockfd);
+	if (res != 0) 
+	{
+		ALOGE("Failed untagging socket %d (My UID=%d)", sockfd, geteuid());
+	}
 }
 
 }  // namespace android

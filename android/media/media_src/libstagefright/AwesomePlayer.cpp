@@ -351,7 +351,7 @@ status_t AwesomePlayer::setDataSource_l( const char *uri, const KeyedVector<Stri
 */
 	reset_l();
 
-	mUri = uri;
+	mUri = uri; /* 保存传入的uri ，在方法AwesomePlayer::finishSetDataSource_l()  中会用到的*/
 
 	if (headers) 
 	{
@@ -385,7 +385,7 @@ status_t AwesomePlayer::setDataSource_l( const char *uri, const KeyedVector<Stri
 	{
 		Mutex::Autolock autoLock(mStatsLock);
 		mStats.mFd = -1;
-		mStats.mURI = mUri;
+		mStats.mURI = mUri; /* 保存传入的uri */
 	}
 
 	return OK;
@@ -407,7 +407,7 @@ status_t AwesomePlayer::setDataSource( int fd, int64_t offset, int64_t length)
 
 	reset_l();
 
-	sp<DataSource> dataSource = new FileSource(fd, offset, length);
+	sp<DataSource> dataSource = new FileSource(fd, offset, length); /* 文件源*/
 
 	status_t err = dataSource->initCheck();
 
@@ -446,7 +446,7 @@ status_t AwesomePlayer::setDataSource_l(const sp<DataSource> &dataSource)
 {
 /*
 	参数:
-		1、
+		1、dataSource	: 传入数据源的实例
 		
 	返回:
 		1、
@@ -454,7 +454,7 @@ status_t AwesomePlayer::setDataSource_l(const sp<DataSource> &dataSource)
 	说明:
 		1、
 */
-	sp<MediaExtractor> extractor = MediaExtractor::Create(dataSource);
+	sp<MediaExtractor> extractor = MediaExtractor::Create(dataSource); /* 创建一个demuxer ，见函数说明，如mp3 类型的创建的MP3Extractor  实例*/
 
 	if (extractor == NULL)
 	{
@@ -462,6 +462,7 @@ status_t AwesomePlayer::setDataSource_l(const sp<DataSource> &dataSource)
 	}
 
 	dataSource->getDrmInfo(mDecryptHandle, &mDrmManagerClient);
+	
 	if (mDecryptHandle != NULL) 
 	{
 		CHECK(mDrmManagerClient);
@@ -478,7 +479,7 @@ status_t AwesomePlayer::setDataSource_l(const sp<MediaExtractor> &extractor)
 {
 /*
 	参数:
-		1、
+		1、extractor	: 传入一个根据数据源创建的demuxer  实例，见MediaExtractor::Create() 方法，如mp3 类型的源，则此实例为MP3Extractor  的实例
 		
 	返回:
 		1、
@@ -535,7 +536,7 @@ status_t AwesomePlayer::setDataSource_l(const sp<MediaExtractor> &extractor)
 
 		if (!haveVideo && !strncasecmp(mime.string(), "video/", 6)) 
 		{
-			setVideoSource(extractor->getTrack(i));
+			setVideoSource(extractor->getTrack(i)); /* 设定视频源*/
 			haveVideo = true;
 
 			// Set the presentation/display size
@@ -547,8 +548,8 @@ status_t AwesomePlayer::setDataSource_l(const sp<MediaExtractor> &extractor)
 			}
 			if (success)
 			{
-				mDisplayWidth = displayWidth;
-				mDisplayHeight = displayHeight;
+				mDisplayWidth = displayWidth; /* 获取宽*/
+				mDisplayHeight = displayHeight; /* 获取高*/
 			}
 
 			{
@@ -561,7 +562,7 @@ status_t AwesomePlayer::setDataSource_l(const sp<MediaExtractor> &extractor)
 		}
 		else if (!haveAudio && !strncasecmp(mime.string(), "audio/", 6))
 		{
-			setAudioSource(extractor->getTrack(i));
+			setAudioSource(extractor->getTrack(i)); /* 设定音频源*/
 			haveAudio = true;
 
 			{
@@ -2762,7 +2763,7 @@ status_t AwesomePlayer::prepareAsync_l()
 	modifyFlags(PREPARING, SET);
 	mAsyncPrepareEvent = new AwesomeEvent( this, &AwesomePlayer::onPrepareAsyncEvent);
 
-	mQueue.postEvent(mAsyncPrepareEvent);
+	mQueue.postEvent(mAsyncPrepareEvent); /* 这里抛了一个AsyncPrepare  消息，事件处理线程就会调用AwesomePlayer::onPrepareAsyncEvent  方法执行*/
 
 	return OK;
 }

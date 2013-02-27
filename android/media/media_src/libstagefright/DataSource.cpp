@@ -39,23 +39,46 @@
 
 namespace android {
 
-bool DataSource::getUInt16(off64_t offset, uint16_t *x) {
-    *x = 0;
+bool DataSource::getUInt16(off64_t offset, uint16_t *x) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	*x = 0;
 
-    uint8_t byte[2];
-    if (readAt(offset, byte, 2) != 2) {
-        return false;
-    }
+	uint8_t byte[2];
+	if (readAt(offset, byte, 2) != 2)
+	{
+		return false;
+	}
 
-    *x = (byte[0] << 8) | byte[1];
+	*x = (byte[0] << 8) | byte[1];
 
-    return true;
+	return true;
 }
 
-status_t DataSource::getSize(off64_t *size) {
-    *size = 0;
+status_t DataSource::getSize(off64_t *size)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	*size = 0;
 
-    return ERROR_UNSUPPORTED;
+	return ERROR_UNSUPPORTED;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -63,91 +86,153 @@ status_t DataSource::getSize(off64_t *size) {
 Mutex DataSource::gSnifferMutex;
 List<DataSource::SnifferFunc> DataSource::gSniffers;
 
-bool DataSource::sniff(
-        String8 *mimeType, float *confidence, sp<AMessage> *meta) {
-    *mimeType = "";
-    *confidence = 0.0f;
-    meta->clear();
+bool DataSource::sniff(String8 *mimeType, float *confidence, sp<AMessage> *meta) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	*mimeType = "";
+	*confidence = 0.0f;
+	meta->clear();
 
-    Mutex::Autolock autoLock(gSnifferMutex);
-    for (List<SnifferFunc>::iterator it = gSniffers.begin();
-         it != gSniffers.end(); ++it) {
-        String8 newMimeType;
-        float newConfidence;
-        sp<AMessage> newMeta;
-        if ((*it)(this, &newMimeType, &newConfidence, &newMeta)) {
-            if (newConfidence > *confidence) {
-                *mimeType = newMimeType;
-                *confidence = newConfidence;
-                *meta = newMeta;
-            }
-        }
-    }
+	Mutex::Autolock autoLock(gSnifferMutex);
+	for (List<SnifferFunc>::iterator it = gSniffers.begin(); it != gSniffers.end(); ++it) 
+	{
+		String8 newMimeType;
+		float newConfidence;
+		sp<AMessage> newMeta;
+		if ((*it)(this, &newMimeType, &newConfidence, &newMeta)) 
+		{
+			if (newConfidence > *confidence) 
+			{
+				*mimeType = newMimeType;
+				*confidence = newConfidence;
+				*meta = newMeta;
+			}
+		}
+	}
 
-    return *confidence > 0.0;
+	return *confidence > 0.0;
 }
 
 // static
-void DataSource::RegisterSniffer(SnifferFunc func) {
-    Mutex::Autolock autoLock(gSnifferMutex);
+void DataSource::RegisterSniffer(SnifferFunc func) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(gSnifferMutex);
 
-    for (List<SnifferFunc>::iterator it = gSniffers.begin();
-         it != gSniffers.end(); ++it) {
-        if (*it == func) {
-            return;
-        }
-    }
+	for (List<SnifferFunc>::iterator it = gSniffers.begin(); it != gSniffers.end(); ++it) 
+	{
+		if (*it == func)
+		{
+			return;
+		}
+	}
 
-    gSniffers.push_back(func);
+	gSniffers.push_back(func);
 }
 
 // static
-void DataSource::RegisterDefaultSniffers() {
-    RegisterSniffer(SniffMPEG4);
-    RegisterSniffer(SniffMatroska);
-    RegisterSniffer(SniffOgg);
-    RegisterSniffer(SniffWAV);
-    RegisterSniffer(SniffFLAC);
-    RegisterSniffer(SniffAMR);
-    RegisterSniffer(SniffMPEG2TS);
-    RegisterSniffer(SniffMP3);
-    RegisterSniffer(SniffAAC);
-    RegisterSniffer(SniffMPEG2PS);
+void DataSource::RegisterDefaultSniffers()
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	RegisterSniffer(SniffMPEG4);
+	RegisterSniffer(SniffMatroska);
+	RegisterSniffer(SniffOgg);
+	RegisterSniffer(SniffWAV);
+	RegisterSniffer(SniffFLAC);
+	RegisterSniffer(SniffAMR);
+	RegisterSniffer(SniffMPEG2TS);
+	RegisterSniffer(SniffMP3);
+	RegisterSniffer(SniffAAC);
+	RegisterSniffer(SniffMPEG2PS);
 
-    char value[PROPERTY_VALUE_MAX];
-    if (property_get("drm.service.enabled", value, NULL)
-            && (!strcmp(value, "1") || !strcasecmp(value, "true"))) {
-        RegisterSniffer(SniffDRM);
-    }
+	char value[PROPERTY_VALUE_MAX];
+	if (property_get("drm.service.enabled", value, NULL)&& (!strcmp(value, "1") || !strcasecmp(value, "true"))) 
+	{
+		RegisterSniffer(SniffDRM);
+	}
 }
 
 // static
-sp<DataSource> DataSource::CreateFromURI(
-        const char *uri, const KeyedVector<String8, String8> *headers) {
-    sp<DataSource> source;
-    if (!strncasecmp("file://", uri, 7)) {
-        source = new FileSource(uri + 7);
-    } else if (!strncasecmp("http://", uri, 7)
-            || !strncasecmp("https://", uri, 8)) {
-        sp<HTTPBase> httpSource = HTTPBase::Create();
-        if (httpSource->connect(uri, headers) != OK) {
-            return NULL;
-        }
-        source = new NuCachedSource2(httpSource);
-    } else {
-        // Assume it's a filename.
-        source = new FileSource(uri);
-    }
+sp<DataSource> DataSource::CreateFromURI( const char *uri, const KeyedVector<String8, String8> *headers) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	sp<DataSource> source;
+	if (!strncasecmp("file://", uri, 7))
+	{
+		source = new FileSource(uri + 7);
+	} 
+	else if (!strncasecmp("http://", uri, 7) || !strncasecmp("https://", uri, 8)) 
+	{
+		sp<HTTPBase> httpSource = HTTPBase::Create();
+		if (httpSource->connect(uri, headers) != OK)
+		{
+			return NULL;
+		}
+		source = new NuCachedSource2(httpSource);
+	}
+	else
+	{
+		// Assume it's a filename.
+		source = new FileSource(uri);
+	}
 
-    if (source == NULL || source->initCheck() != OK) {
-        return NULL;
-    }
+	if (source == NULL || source->initCheck() != OK)
+	{
+		return NULL;
+	}
 
-    return source;
+	return source;
 }
 
-String8 DataSource::getMIMEType() const {
-    return String8("application/octet-stream");
+String8 DataSource::getMIMEType() const 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	return String8("application/octet-stream");
 }
 
 }  // namespace android

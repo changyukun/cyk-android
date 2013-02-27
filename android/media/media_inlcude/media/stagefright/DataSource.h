@@ -33,74 +33,77 @@ namespace android {
 struct AMessage;
 class String8;
 
-class DataSource : public RefBase {
+/* 数据源类定义*/
+class DataSource : public RefBase 
+{
 public:
-    enum Flags {
-        kWantsPrefetching      = 1,
-        kStreamedFromLocalHost = 2,
-        kIsCachingDataSource   = 4,
-        kIsHTTPBasedSource     = 8,
-    };
+	enum Flags 
+	{
+		kWantsPrefetching      = 1,
+		kStreamedFromLocalHost = 2,
+		kIsCachingDataSource   = 4,
+		kIsHTTPBasedSource     = 8,
+	};
 
-    static sp<DataSource> CreateFromURI(
-            const char *uri,
-            const KeyedVector<String8, String8> *headers = NULL);
+	static sp<DataSource> CreateFromURI(const char *uri, const KeyedVector<String8, String8> *headers = NULL);
 
-    DataSource() {}
+	DataSource() {}
 
-    virtual status_t initCheck() const = 0;
+	virtual status_t initCheck() const = 0;
 
-    virtual ssize_t readAt(off64_t offset, void *data, size_t size) = 0;
+	virtual ssize_t readAt(off64_t offset, void *data, size_t size) = 0;
 
-    // Convenience methods:
-    bool getUInt16(off64_t offset, uint16_t *x);
+	// Convenience methods:
+	bool getUInt16(off64_t offset, uint16_t *x);
 
-    // May return ERROR_UNSUPPORTED.
-    virtual status_t getSize(off64_t *size);
+	// May return ERROR_UNSUPPORTED.
+	virtual status_t getSize(off64_t *size);
 
-    virtual uint32_t flags() {
-        return 0;
-    }
+	virtual uint32_t flags() 
+	{
+		return 0;
+	}
 
-    virtual status_t reconnectAtOffset(off64_t offset) {
-        return ERROR_UNSUPPORTED;
-    }
+	virtual status_t reconnectAtOffset(off64_t offset) 
+	{
+		return ERROR_UNSUPPORTED;
+	}
 
-    ////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
 
-    bool sniff(String8 *mimeType, float *confidence, sp<AMessage> *meta);
+	bool sniff(String8 *mimeType, float *confidence, sp<AMessage> *meta);
 
-    // The sniffer can optionally fill in "meta" with an AMessage containing
-    // a dictionary of values that helps the corresponding extractor initialize
-    // its state without duplicating effort already exerted by the sniffer.
-    typedef bool (*SnifferFunc)(
-            const sp<DataSource> &source, String8 *mimeType,
-            float *confidence, sp<AMessage> *meta);
+	// The sniffer can optionally fill in "meta" with an AMessage containing
+	// a dictionary of values that helps the corresponding extractor initialize
+	// its state without duplicating effort already exerted by the sniffer.
+	typedef bool (*SnifferFunc)( const sp<DataSource> &source, String8 *mimeType, float *confidence, sp<AMessage> *meta);
 
-    static void RegisterSniffer(SnifferFunc func);
-    static void RegisterDefaultSniffers();
+	static void RegisterSniffer(SnifferFunc func);
+	static void RegisterDefaultSniffers();
 
-    // for DRM
-    virtual sp<DecryptHandle> DrmInitialization() {
-        return NULL;
-    }
-    virtual void getDrmInfo(sp<DecryptHandle> &handle, DrmManagerClient **client) {};
+	// for DRM
+	virtual sp<DecryptHandle> DrmInitialization()
+	{
+		return NULL;
+	}
+	virtual void getDrmInfo(sp<DecryptHandle> &handle, DrmManagerClient **client) {};
 
-    virtual String8 getUri() {
-        return String8();
-    }
+	virtual String8 getUri() 
+	{
+		return String8();
+	}
 
-    virtual String8 getMIMEType() const;
+	virtual String8 getMIMEType() const;
 
 protected:
-    virtual ~DataSource() {}
+	virtual ~DataSource() {}
 
-private:
-    static Mutex gSnifferMutex;
-    static List<SnifferFunc> gSniffers;
+	private:
+	static Mutex gSnifferMutex;
+	static List<SnifferFunc> gSniffers;
 
-    DataSource(const DataSource &);
-    DataSource &operator=(const DataSource &);
+	DataSource(const DataSource &);
+	DataSource &operator=(const DataSource &);
 };
 
 }  // namespace android
