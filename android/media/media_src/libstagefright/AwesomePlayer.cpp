@@ -219,7 +219,7 @@ AwesomePlayer::AwesomePlayer()	: mQueueStarted(false),
 
 	DataSource::RegisterDefaultSniffers();
 
-	mVideoEvent = new AwesomeEvent(this, &AwesomePlayer::onVideoEvent);
+	mVideoEvent = new AwesomeEvent(this, &AwesomePlayer::onVideoEvent); /* 视频事件队列*/
 	mVideoEventPending = false;
 	mStreamDoneEvent = new AwesomeEvent(this, &AwesomePlayer::onStreamDone);
 	mStreamDoneEventPending = false;
@@ -2243,7 +2243,7 @@ void AwesomePlayer::onVideoEvent()
 		1、
 		
 	说明:
-		1、
+		1、视频事件的处理函数
 */
 	Mutex::Autolock autoLock(mLock);
 	if (!mVideoEventPending) 
@@ -2723,7 +2723,7 @@ status_t AwesomePlayer::prepareAsync()
 		1、
 		
 	说明:
-		1、
+		1、进入函数分析，会间接创建event  线程，见线程函数TimedEventQueue::threadEntry() 
 */
 	Mutex::Autolock autoLock(mLock);
 
@@ -2755,7 +2755,7 @@ status_t AwesomePlayer::prepareAsync_l()
 
 	if (!mQueueStarted) 
 	{
-		mQueue.start();
+		mQueue.start(); /* 进入此函数内部分析，创建了event  线程*/
 		mQueueStarted = true;
 	}
 
@@ -2794,13 +2794,9 @@ status_t AwesomePlayer::finishSetDataSource_l()
 
 	AString sniffedMIME;
 
-	if (!strncasecmp("http://", mUri.string(), 7)
-					|| !strncasecmp("https://", mUri.string(), 8)
-					|| isWidevineStreaming) 
+	if (!strncasecmp("http://", mUri.string(), 7) || !strncasecmp("https://", mUri.string(), 8) || isWidevineStreaming) 
 	{
-		mConnectingDataSource = HTTPBase::Create(	(mFlags & INCOGNITO)
-												? HTTPBase::kFlagIncognito
-												: 0);
+		mConnectingDataSource = HTTPBase::Create((mFlags & INCOGNITO) ? HTTPBase::kFlagIncognito : 0);
 
 		if (mUIDValid)
 		{
@@ -2832,10 +2828,9 @@ status_t AwesomePlayer::finishSetDataSource_l()
 			new ThrottledSource(
 			mConnectingDataSource, 50 * 1024 /* bytes/sec */));
 #else
-			mCachedSource = new NuCachedSource2(
-			mConnectingDataSource,
-			cacheConfig.isEmpty() ? NULL : cacheConfig.string(),
-			disconnectAtHighwatermark);
+			mCachedSource = new NuCachedSource2(mConnectingDataSource,
+												cacheConfig.isEmpty() ? NULL : cacheConfig.string(),
+												disconnectAtHighwatermark);
 #endif
 
 			dataSource = mCachedSource;
@@ -3041,7 +3036,7 @@ void AwesomePlayer::onPrepareAsyncEvent()
 		1、
 		
 	说明:
-		1、
+		1、PrepareAsync  事件的处理函数
 */
 	Mutex::Autolock autoLock(mLock);
 
@@ -3052,9 +3047,9 @@ void AwesomePlayer::onPrepareAsyncEvent()
 		return;
 	}
 
-	if (mUri.size() > 0) 
+	if (mUri.size() > 0) /* mUri 长度不为空，则设定源 */
 	{
-		status_t err = finishSetDataSource_l();
+		status_t err = finishSetDataSource_l();/* 进入分析，------>  源创建*/
 
 		if (err != OK) 
 		{
@@ -3065,7 +3060,7 @@ void AwesomePlayer::onPrepareAsyncEvent()
 
 	if (mVideoTrack != NULL && mVideoSource == NULL) 
 	{
-		status_t err = initVideoDecoder();
+		status_t err = initVideoDecoder(); /* 初始化视频解码器，------>  视频解码器创建??? */
 
 		if (err != OK) 
 		{
@@ -3076,7 +3071,7 @@ void AwesomePlayer::onPrepareAsyncEvent()
 
 	if (mAudioTrack != NULL && mAudioSource == NULL)
 	{
-		status_t err = initAudioDecoder();
+		status_t err = initAudioDecoder(); /* 初始化音频解码器，------>  音频解码器创建??? */
 
 		if (err != OK) 
 		{
