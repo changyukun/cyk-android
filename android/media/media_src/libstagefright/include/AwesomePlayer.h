@@ -44,14 +44,16 @@ class DecryptHandle;
 class TimedTextPlayer;
 struct WVMExtractor;
 
-struct AwesomeRenderer : public RefBase {
-    AwesomeRenderer() {}
+/* AwesomePlayer 播放器的渲染器类的基类*/
+struct AwesomeRenderer : public RefBase 
+{
+	AwesomeRenderer() {}
 
-    virtual void render(MediaBuffer *buffer) = 0;
+	virtual void render(MediaBuffer *buffer) = 0;
 
 private:
-    AwesomeRenderer(const AwesomeRenderer &);
-    AwesomeRenderer &operator=(const AwesomeRenderer &);
+	AwesomeRenderer(const AwesomeRenderer &);
+	AwesomeRenderer &operator=(const AwesomeRenderer &);
 };
 
 struct AwesomePlayer 
@@ -165,12 +167,12 @@ private:
 	sp<DataSource> mFileSource;
 
 	sp<MediaSource> mVideoTrack; /* 见方法AwesomePlayer::setDataSource_l 中调用AwesomePlayer::setVideoSource  对其进行设定*/
-	sp<MediaSource> mVideoSource; /* 见方法AwesomePlayer::onPrepareAsyncEvent()  中的说明*/
-	sp<AwesomeRenderer> mVideoRenderer;
+	sp<MediaSource> mVideoSource; /* 见方法AwesomePlayer::initVideoDecoder 对其进行赋值、见方法AwesomePlayer::onPrepareAsyncEvent()  中的说明*/
+	sp<AwesomeRenderer> mVideoRenderer; /* 见AwesomePlayer::initRenderer_l() 方法对其进行的赋值*/
 	bool mVideoRendererIsPreview;
 
 	sp<MediaSource> mAudioTrack; /* 见方法AwesomePlayer::setDataSource_l 中调用AwesomePlayer::setAudioSource  对其进行设定*/
-	sp<MediaSource> mAudioSource;
+	sp<MediaSource> mAudioSource; /* 见方法AwesomePlayer::initAudioDecoder  对其进行赋值*/
 	AudioPlayer *mAudioPlayer;
 	int64_t mDurationUs;
 
@@ -201,15 +203,15 @@ private:
 	bool mWatchForAudioEOS;
 
 	sp<TimedEventQueue::Event> mVideoEvent; /* 见构造函数的创建，通过函数postVideoEvent_l() 调用发送此事件，然后事件线程TimedEventQueue::threadEntry()  就会处理此事件，就会调用此事件的处理函数AwesomePlayer::onVideoEvent() */
-	bool mVideoEventPending;
+	bool mVideoEventPending; /* 此变量用于防止onVideoEvent() 或者onVideoEvent()  函数被连续的两次调用，目的就是确保这两个函数交替一对一的顺序调用*/
 	sp<TimedEventQueue::Event> mStreamDoneEvent;
-	bool mStreamDoneEventPending;
+	bool mStreamDoneEventPending; /* 参看mVideoEventPending 成员的说明，目的都是防止添加事件函数或者响应事件函数被连续的两次调用，确保添加函数与响应函数一对一的顺序调用 */
 	sp<TimedEventQueue::Event> mBufferingEvent;
-	bool mBufferingEventPending;
+	bool mBufferingEventPending; /* 参看mVideoEventPending 成员的说明，目的都是防止添加事件函数或者响应事件函数被连续的两次调用，确保添加函数与响应函数一对一的顺序调用 */
 	sp<TimedEventQueue::Event> mCheckAudioStatusEvent;
-	bool mAudioStatusEventPending;
+	bool mAudioStatusEventPending; /* 参看mVideoEventPending 成员的说明，目的都是防止添加事件函数或者响应事件函数被连续的两次调用，确保添加函数与响应函数一对一的顺序调用 */
 	sp<TimedEventQueue::Event> mVideoLagEvent;
-	bool mVideoLagEventPending;
+	bool mVideoLagEventPending; /* 参看mVideoEventPending 成员的说明，目的都是防止添加事件函数或者响应事件函数被连续的两次调用，确保添加函数与响应函数一对一的顺序调用 */
 
 	sp<TimedEventQueue::Event> mAsyncPrepareEvent; /* 见AwesomePlayer::prepareAsync_l() 方法创建的此变量，此事件的处理函数为AwesomePlayer::onPrepareAsyncEvent() ，参看上面mVideoEvent 事件的说明*/
 	Condition mPreparedCondition;

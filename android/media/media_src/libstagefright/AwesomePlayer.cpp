@@ -66,6 +66,7 @@ static int64_t kHighWaterMarkUs = 5000000ll;  // 5secs
 static const size_t kLowWaterMarkBytes = 40000;
 static const size_t kHighWaterMarkBytes = 200000;
 
+/* 事件*/
 struct AwesomeEvent : public TimedEventQueue::Event 
 {
 	AwesomeEvent(AwesomePlayer *player,void (AwesomePlayer::*method)())  : mPlayer(player), mMethod(method) 
@@ -88,6 +89,9 @@ private:
 	AwesomeEvent &operator=(const AwesomeEvent &);
 };
 
+
+
+/* 本地渲染器*/
 struct AwesomeLocalRenderer : public AwesomeRenderer 
 {
 	AwesomeLocalRenderer(const sp<ANativeWindow> &nativeWindow, const sp<MetaData> &meta): mTarget(new SoftwareRenderer(nativeWindow, meta))
@@ -112,12 +116,13 @@ protected:
 	}
 
 private:
-	SoftwareRenderer *mTarget;
+	SoftwareRenderer *mTarget; /* 见类SoftwareRenderer 的说明*/
 
 	AwesomeLocalRenderer(const AwesomeLocalRenderer &);
 	AwesomeLocalRenderer &operator=(const AwesomeLocalRenderer &);;
 };
 
+/* 本地窗口渲染器*/
 struct AwesomeNativeWindowRenderer : public AwesomeRenderer
 {
 	AwesomeNativeWindowRenderer(const sp<ANativeWindow> &nativeWindow, int32_t rotationDegrees) : mNativeWindow(nativeWindow) 
@@ -169,6 +174,8 @@ private:
 	AwesomeNativeWindowRenderer &operator=(
 	const AwesomeNativeWindowRenderer &);
 };
+
+
 
 // To collect the decoder usage
 void addBatteryData(uint32_t params) 
@@ -228,8 +235,7 @@ AwesomePlayer::AwesomePlayer()	: mQueueStarted(false),
 	mVideoLagEvent = new AwesomeEvent(this, &AwesomePlayer::onVideoLagUpdate);
 	mVideoEventPending = false;
 
-	mCheckAudioStatusEvent = new AwesomeEvent(
-	this, &AwesomePlayer::onCheckAudioStatus);
+	mCheckAudioStatusEvent = new AwesomeEvent(this, &AwesomePlayer::onCheckAudioStatus);
 
 	mAudioStatusEventPending = false;
 
@@ -1417,7 +1423,7 @@ void AwesomePlayer::initRenderer_l()
 		1、
 		
 	说明:
-		1、
+		1、此函数内实现了创建一个渲染器
 */
 	if (mNativeWindow == NULL) 
 	{
@@ -1446,16 +1452,12 @@ void AwesomePlayer::initRenderer_l()
 	// before creating a new one.
 	IPCThreadState::self()->flushCommands();
 
-	if (USE_SURFACE_ALLOC
-					&& !strncmp(component, "OMX.", 4)
-					&& strncmp(component, "OMX.google.", 11)
-					&& strcmp(component, "OMX.Nvidia.mpeg2v.decode"))
+	if (USE_SURFACE_ALLOC && !strncmp(component, "OMX.", 4) && strncmp(component, "OMX.google.", 11) && strcmp(component, "OMX.Nvidia.mpeg2v.decode"))
 	{
 		// Hardware decoders avoid the CPU color conversion by decoding
 		// directly to ANativeBuffers, so we must use a renderer that
 		// just pushes those buffers to the ANativeWindow.
-		mVideoRenderer =
-		new AwesomeNativeWindowRenderer(mNativeWindow, rotationDegrees);
+		mVideoRenderer = new AwesomeNativeWindowRenderer(mNativeWindow, rotationDegrees); /* 创建一个本地的渲染器*/
 	} 
 	else
 	{
@@ -1463,7 +1465,7 @@ void AwesomePlayer::initRenderer_l()
 		// allocate their buffers in local address space.  This renderer
 		// then performs a color conversion and copy to get the data
 		// into the ANativeBuffer.
-		mVideoRenderer = new AwesomeLocalRenderer(mNativeWindow, meta);
+		mVideoRenderer = new AwesomeLocalRenderer(mNativeWindow, meta); /* 创建一个本地的渲染器*/
 	}
 }
 
@@ -1987,7 +1989,9 @@ status_t AwesomePlayer::initAudioDecoder()
 	}
 	else 
 	{
-		mAudioSource = OMXCodec::Create(mClient.interface(), mAudioTrack->getFormat(),
+		/* 创建一个音频源，通过OpenMax 接口创建*/
+		mAudioSource = OMXCodec::Create(	mClient.interface(), 
+										mAudioTrack->getFormat(),
 										false, // createEncoder
 										mAudioTrack);
 	}
@@ -2127,10 +2131,15 @@ status_t AwesomePlayer::initVideoDecoder(uint32_t flags)
 	}
 #endif
 	ALOGV("initVideoDecoder flags=0x%x", flags);
-	mVideoSource = OMXCodec::Create(	mClient.interface(), mVideoTrack->getFormat(),
+
+	/* 创建一个视频源，通过OpenMax 接口创建*/
+	mVideoSource = OMXCodec::Create(	mClient.interface(),
+									mVideoTrack->getFormat(),
 									false, // createEncoder
 									mVideoTrack,
-									NULL, flags, USE_SURFACE_ALLOC ? mNativeWindow : NULL);
+									NULL, 
+									flags, 
+									USE_SURFACE_ALLOC ? mNativeWindow : NULL);
 
 	if (mVideoSource != NULL)
 	{
@@ -2247,7 +2256,9 @@ void AwesomePlayer::onVideoEvent()
 		1、视频事件的处理函数
 */
 	Mutex::Autolock autoLock(mLock);
-	if (!mVideoEventPending) 
+
+ 	/* 下面针对变量mVideoEventPending  是防止本函数被连续的两次调用，目的就是确保此函数与postVideoEvent_l 函数顺序调用*/
+	if (!mVideoEventPending)
 	{
 		// The event has been cancelled in reset_l() but had already
 		// been scheduled for execution at that time.
@@ -2290,15 +2301,21 @@ void AwesomePlayer::onVideoEvent()
 		{
 			ALOGV("seeking to %lld us (%.2f secs)", mSeekTimeUs, mSeekTimeUs / 1E6);
 
-			options.setSeekTo(	mSeekTimeUs,
-							mSeeking == SEEK_VIDEO_ONLY
-							? MediaSource::ReadOptions::SEEK_NEXT_SYNC
-							: MediaSource::ReadOptions::SEEK_CLOSEST_SYNC);
+			options.setSeekTo(	mSeekTimeUs,  mSeeking == SEEK_VIDEO_ONLY ? MediaSource::ReadOptions::SEEK_NEXT_SYNC : MediaSource::ReadOptions::SEEK_CLOSEST_SYNC);
 		}
 		
 		for (;;) 
 		{
+			/*
+				mVideoSource->read() 方法的实现步骤:
+				A）通过调用drainInputBuffers()对mPortBuffers[kPortIndexInput]进行填充，这一步完成 parse。
+					由OpenMAX从数据源把demux后的数据读取到输入缓冲区，作为OpenMAX的输入。
+				B）通过fillOutputBuffers()对mPortBuffers[kPortIndexOutput]进行填充，这一步完成 decode。由
+					OpenMAX对输入缓冲区中的数据进行解码，然后把解码后可以显示的视频
+					数据输出到输出缓冲区。
+			*/
 			status_t err = mVideoSource->read(&mVideoBuffer, &options);
+			
 			options.clearSeekTo();
 
 			if (err != OK) 
@@ -2314,7 +2331,7 @@ void AwesomePlayer::onVideoEvent()
 					if (mVideoRenderer != NULL)
 					{
 						mVideoRendererIsPreview = false;
-						initRenderer_l();
+						initRenderer_l(); /* 渲染器还没有初始化，则进行初始化*/
 					}
 					continue;
 				}
@@ -2481,13 +2498,13 @@ void AwesomePlayer::onVideoEvent()
 	{
 		mVideoRendererIsPreview = false;
 
-		initRenderer_l();
+		initRenderer_l(); /* 渲染器还没有初始化，则进行初始化*/
 	}
 
 	if (mVideoRenderer != NULL) 
 	{
 		mSinceLastDropped++;
-		mVideoRenderer->render(mVideoBuffer);
+		mVideoRenderer->render(mVideoBuffer); /* 交由渲染器对原始视频数据进行渲染*/
 	}
 
 	mVideoBuffer->release();
@@ -2512,14 +2529,15 @@ void AwesomePlayer::postVideoEvent_l(int64_t delayUs)
 		1、
 		
 	说明:
-		1、
+		1、发送一个视频事件到事件处理队列中
 */
+	/* 下面针对变量mVideoEventPending  是防止本函数被连续的两次调用，目的就是确保此函数与onVideoEvent 函数顺序调用*/
 	if (mVideoEventPending)
 	{
 		return;
 	}
-
 	mVideoEventPending = true;
+	
 	mQueue.postEventWithDelay(mVideoEvent, delayUs < 0 ? 10000 : delayUs);
 }
 

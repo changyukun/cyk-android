@@ -59,9 +59,10 @@ const static int64_t kBufferFilledEventTimeOutNs = 3000000000LL;
 // component in question is buggy or not.
 const static uint32_t kMaxColorFormatSupported = 1000;
 
-struct CodecInfo {
-    const char *mime;
-    const char *codec;
+struct CodecInfo 
+{
+	const char *mime;
+	const char *codec;
 };
 
 #define FACTORY_CREATE_ENCODER(name) \
@@ -79,102 +80,109 @@ FACTORY_CREATE_ENCODER(M4vH263Encoder)
 
 static sp<MediaSource> InstantiateSoftwareEncoder(
         const char *name, const sp<MediaSource> &source,
-        const sp<MetaData> &meta) {
-    struct FactoryInfo {
-        const char *name;
-        sp<MediaSource> (*CreateFunc)(const sp<MediaSource> &, const sp<MetaData> &);
-    };
+        const sp<MetaData> &meta) 
+{
+	struct FactoryInfo 
+	{
+		const char *name;
+		sp<MediaSource> (*CreateFunc)(const sp<MediaSource> &, const sp<MetaData> &);
+	};
 
-    static const FactoryInfo kFactoryInfo[] = {
-        FACTORY_REF(AMRNBEncoder)
-        FACTORY_REF(AMRWBEncoder)
-        FACTORY_REF(AACEncoder)
-        FACTORY_REF(AVCEncoder)
-        FACTORY_REF(M4vH263Encoder)
-    };
-    for (size_t i = 0;
-         i < sizeof(kFactoryInfo) / sizeof(kFactoryInfo[0]); ++i) {
-        if (!strcmp(name, kFactoryInfo[i].name)) {
-            return (*kFactoryInfo[i].CreateFunc)(source, meta);
-        }
-    }
+	static const FactoryInfo kFactoryInfo[] = 
+	{
+		FACTORY_REF(AMRNBEncoder)
+		FACTORY_REF(AMRWBEncoder)
+		FACTORY_REF(AACEncoder)
+		FACTORY_REF(AVCEncoder)
+		FACTORY_REF(M4vH263Encoder)
+	};
+	
+	for (size_t i = 0; i < sizeof(kFactoryInfo) / sizeof(kFactoryInfo[0]); ++i)
+	{
+		if (!strcmp(name, kFactoryInfo[i].name)) 
+		{
+			return (*kFactoryInfo[i].CreateFunc)(source, meta);
+		}
+	}
 
-    return NULL;
+	return NULL;
 }
 
 #undef FACTORY_REF
 #undef FACTORY_CREATE
 
-static const CodecInfo kDecoderInfo[] = {
-    { MEDIA_MIMETYPE_IMAGE_JPEG, "OMX.TI.JPEG.decode" },
-//    { MEDIA_MIMETYPE_AUDIO_MPEG, "OMX.TI.MP3.decode" },
-    { MEDIA_MIMETYPE_AUDIO_MPEG, "OMX.google.mp3.decoder" },
-    { MEDIA_MIMETYPE_AUDIO_MPEG_LAYER_II, "OMX.Nvidia.mp2.decoder" },
-//    { MEDIA_MIMETYPE_AUDIO_AMR_NB, "OMX.TI.AMR.decode" },
-//    { MEDIA_MIMETYPE_AUDIO_AMR_NB, "OMX.Nvidia.amr.decoder" },
-    { MEDIA_MIMETYPE_AUDIO_AMR_NB, "OMX.google.amrnb.decoder" },
-//    { MEDIA_MIMETYPE_AUDIO_AMR_NB, "OMX.Nvidia.amrwb.decoder" },
-    { MEDIA_MIMETYPE_AUDIO_AMR_WB, "OMX.TI.WBAMR.decode" },
-    { MEDIA_MIMETYPE_AUDIO_AMR_WB, "OMX.google.amrwb.decoder" },
-//    { MEDIA_MIMETYPE_AUDIO_AAC, "OMX.Nvidia.aac.decoder" },
-    { MEDIA_MIMETYPE_AUDIO_AAC, "OMX.TI.AAC.decode" },
-    { MEDIA_MIMETYPE_AUDIO_AAC, "OMX.google.aac.decoder" },
-    { MEDIA_MIMETYPE_AUDIO_G711_ALAW, "OMX.google.g711.alaw.decoder" },
-    { MEDIA_MIMETYPE_AUDIO_G711_MLAW, "OMX.google.g711.mlaw.decoder" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.TI.DUCATI1.VIDEO.DECODER" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.Nvidia.mp4.decode" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.qcom.7x30.video.decoder.mpeg4" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.qcom.video.decoder.mpeg4" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.TI.Video.Decoder" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.SEC.MPEG4.Decoder" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.google.mpeg4.decoder" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.TI.DUCATI1.VIDEO.DECODER" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.Nvidia.h263.decode" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.qcom.7x30.video.decoder.h263" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.qcom.video.decoder.h263" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.SEC.H263.Decoder" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.google.h263.decoder" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.TI.DUCATI1.VIDEO.DECODER" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.Nvidia.h264.decode" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.qcom.7x30.video.decoder.avc" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.qcom.video.decoder.avc" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.TI.Video.Decoder" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.SEC.AVC.Decoder" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.google.h264.decoder" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.google.avc.decoder" },
-    { MEDIA_MIMETYPE_AUDIO_VORBIS, "OMX.google.vorbis.decoder" },
-    { MEDIA_MIMETYPE_VIDEO_VPX, "OMX.google.vpx.decoder" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG2, "OMX.Nvidia.mpeg2v.decode" },
+static const CodecInfo kDecoderInfo[] = 
+{
+	{ MEDIA_MIMETYPE_IMAGE_JPEG, "OMX.TI.JPEG.decode" },
+	//    { MEDIA_MIMETYPE_AUDIO_MPEG, "OMX.TI.MP3.decode" },
+	{ MEDIA_MIMETYPE_AUDIO_MPEG, "OMX.google.mp3.decoder" },
+	{ MEDIA_MIMETYPE_AUDIO_MPEG_LAYER_II, "OMX.Nvidia.mp2.decoder" },
+	//    { MEDIA_MIMETYPE_AUDIO_AMR_NB, "OMX.TI.AMR.decode" },
+	//    { MEDIA_MIMETYPE_AUDIO_AMR_NB, "OMX.Nvidia.amr.decoder" },
+	{ MEDIA_MIMETYPE_AUDIO_AMR_NB, "OMX.google.amrnb.decoder" },
+	//    { MEDIA_MIMETYPE_AUDIO_AMR_NB, "OMX.Nvidia.amrwb.decoder" },
+	{ MEDIA_MIMETYPE_AUDIO_AMR_WB, "OMX.TI.WBAMR.decode" },
+	{ MEDIA_MIMETYPE_AUDIO_AMR_WB, "OMX.google.amrwb.decoder" },
+	//    { MEDIA_MIMETYPE_AUDIO_AAC, "OMX.Nvidia.aac.decoder" },
+	{ MEDIA_MIMETYPE_AUDIO_AAC, "OMX.TI.AAC.decode" },
+	{ MEDIA_MIMETYPE_AUDIO_AAC, "OMX.google.aac.decoder" },
+	{ MEDIA_MIMETYPE_AUDIO_G711_ALAW, "OMX.google.g711.alaw.decoder" },
+	{ MEDIA_MIMETYPE_AUDIO_G711_MLAW, "OMX.google.g711.mlaw.decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.TI.DUCATI1.VIDEO.DECODER" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.Nvidia.mp4.decode" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.qcom.7x30.video.decoder.mpeg4" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.qcom.video.decoder.mpeg4" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.TI.Video.Decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.SEC.MPEG4.Decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.google.mpeg4.decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.TI.DUCATI1.VIDEO.DECODER" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.Nvidia.h263.decode" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.qcom.7x30.video.decoder.h263" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.qcom.video.decoder.h263" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.SEC.H263.Decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.google.h263.decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.TI.DUCATI1.VIDEO.DECODER" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.Nvidia.h264.decode" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.qcom.7x30.video.decoder.avc" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.qcom.video.decoder.avc" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.TI.Video.Decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.SEC.AVC.Decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.google.h264.decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.google.avc.decoder" },
+	{ MEDIA_MIMETYPE_AUDIO_VORBIS, "OMX.google.vorbis.decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_VPX, "OMX.google.vpx.decoder" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG2, "OMX.Nvidia.mpeg2v.decode" },
 };
 
-static const CodecInfo kEncoderInfo[] = {
-    { MEDIA_MIMETYPE_AUDIO_AMR_NB, "OMX.TI.AMR.encode" },
-    { MEDIA_MIMETYPE_AUDIO_AMR_NB, "AMRNBEncoder" },
-    { MEDIA_MIMETYPE_AUDIO_AMR_WB, "OMX.TI.WBAMR.encode" },
-    { MEDIA_MIMETYPE_AUDIO_AMR_WB, "AMRWBEncoder" },
-    { MEDIA_MIMETYPE_AUDIO_AAC, "OMX.TI.AAC.encode" },
-    { MEDIA_MIMETYPE_AUDIO_AAC, "AACEncoder" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.TI.DUCATI1.VIDEO.MPEG4E" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.qcom.7x30.video.encoder.mpeg4" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.qcom.video.encoder.mpeg4" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.TI.Video.encoder" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.Nvidia.mp4.encoder" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.SEC.MPEG4.Encoder" },
-    { MEDIA_MIMETYPE_VIDEO_MPEG4, "M4vH263Encoder" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.TI.DUCATI1.VIDEO.MPEG4E" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.qcom.7x30.video.encoder.h263" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.qcom.video.encoder.h263" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.TI.Video.encoder" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.Nvidia.h263.encoder" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "OMX.SEC.H263.Encoder" },
-    { MEDIA_MIMETYPE_VIDEO_H263, "M4vH263Encoder" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.TI.DUCATI1.VIDEO.H264E" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.qcom.7x30.video.encoder.avc" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.qcom.video.encoder.avc" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.TI.Video.encoder" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.Nvidia.h264.encoder" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "OMX.SEC.AVC.Encoder" },
-    { MEDIA_MIMETYPE_VIDEO_AVC, "AVCEncoder" },
+static const CodecInfo kEncoderInfo[] = 
+{
+	{ MEDIA_MIMETYPE_AUDIO_AMR_NB, "OMX.TI.AMR.encode" },
+	{ MEDIA_MIMETYPE_AUDIO_AMR_NB, "AMRNBEncoder" },
+	{ MEDIA_MIMETYPE_AUDIO_AMR_WB, "OMX.TI.WBAMR.encode" },
+	{ MEDIA_MIMETYPE_AUDIO_AMR_WB, "AMRWBEncoder" },
+	{ MEDIA_MIMETYPE_AUDIO_AAC, "OMX.TI.AAC.encode" },
+	{ MEDIA_MIMETYPE_AUDIO_AAC, "AACEncoder" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.TI.DUCATI1.VIDEO.MPEG4E" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.qcom.7x30.video.encoder.mpeg4" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.qcom.video.encoder.mpeg4" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.TI.Video.encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.Nvidia.mp4.encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "OMX.SEC.MPEG4.Encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_MPEG4, "M4vH263Encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.TI.DUCATI1.VIDEO.MPEG4E" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.qcom.7x30.video.encoder.h263" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.qcom.video.encoder.h263" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.TI.Video.encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.Nvidia.h263.encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "OMX.SEC.H263.Encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_H263, "M4vH263Encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.TI.DUCATI1.VIDEO.H264E" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.qcom.7x30.video.encoder.avc" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.qcom.video.encoder.avc" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.TI.Video.encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.Nvidia.h264.encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "OMX.SEC.AVC.Encoder" },
+	{ MEDIA_MIMETYPE_VIDEO_AVC, "AVCEncoder" },
 };
 
 #undef OPTIONAL
@@ -183,420 +191,547 @@ static const CodecInfo kEncoderInfo[] = {
 #define CODEC_LOGV(x, ...) ALOGV("[%s] "x, mComponentName, ##__VA_ARGS__)
 #define CODEC_LOGE(x, ...) ALOGE("[%s] "x, mComponentName, ##__VA_ARGS__)
 
-struct OMXCodecObserver : public BnOMXObserver {
-    OMXCodecObserver() {
-    }
+struct OMXCodecObserver : public BnOMXObserver 
+{
+	OMXCodecObserver() 
+	{
+	}
 
-    void setCodec(const sp<OMXCodec> &target) {
-        mTarget = target;
-    }
+	void setCodec(const sp<OMXCodec> &target) 
+	{
+		mTarget = target;
+	}
 
-    // from IOMXObserver
-    virtual void onMessage(const omx_message &msg) {
-        sp<OMXCodec> codec = mTarget.promote();
+	// from IOMXObserver
+	virtual void onMessage(const omx_message &msg) 
+	{
+		sp<OMXCodec> codec = mTarget.promote();
 
-        if (codec.get() != NULL) {
-            Mutex::Autolock autoLock(codec->mLock);
-            codec->on_message(msg);
-            codec.clear();
-        }
-    }
+		if (codec.get() != NULL) 
+		{
+			Mutex::Autolock autoLock(codec->mLock);
+			codec->on_message(msg);
+			codec.clear();
+		}
+	}
 
 protected:
-    virtual ~OMXCodecObserver() {}
+    	virtual ~OMXCodecObserver() {}
 
 private:
-    wp<OMXCodec> mTarget;
+	wp<OMXCodec> mTarget;
 
-    OMXCodecObserver(const OMXCodecObserver &);
-    OMXCodecObserver &operator=(const OMXCodecObserver &);
+	OMXCodecObserver(const OMXCodecObserver &);
+	OMXCodecObserver &operator=(const OMXCodecObserver &);
 };
 
-static const char *GetCodec(const CodecInfo *info, size_t numInfos,
-                            const char *mime, int index) {
-    CHECK(index >= 0);
-    for(size_t i = 0; i < numInfos; ++i) {
-        if (!strcasecmp(mime, info[i].mime)) {
-            if (index == 0) {
-                return info[i].codec;
-            }
+static const char *GetCodec(const CodecInfo *info, size_t numInfos,const char *mime, int index) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	CHECK(index >= 0);
+	for(size_t i = 0; i < numInfos; ++i) 
+	{
+		if (!strcasecmp(mime, info[i].mime)) 
+		{
+			if (index == 0) 
+			{
+				return info[i].codec;
+			}
 
-            --index;
-        }
-    }
+			--index;
+		}
+	}
 
-    return NULL;
+	return NULL;
 }
 
 template<class T>
-static void InitOMXParams(T *params) {
-    params->nSize = sizeof(T);
-    params->nVersion.s.nVersionMajor = 1;
-    params->nVersion.s.nVersionMinor = 0;
-    params->nVersion.s.nRevision = 0;
-    params->nVersion.s.nStep = 0;
+static void InitOMXParams(T *params) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	params->nSize = sizeof(T);
+	params->nVersion.s.nVersionMajor = 1;
+	params->nVersion.s.nVersionMinor = 0;
+	params->nVersion.s.nRevision = 0;
+	params->nVersion.s.nStep = 0;
 }
 
-static bool IsSoftwareCodec(const char *componentName) {
-    if (!strncmp("OMX.google.", componentName, 11)) {
-        return true;
-    }
+static bool IsSoftwareCodec(const char *componentName)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (!strncmp("OMX.google.", componentName, 11)) 
+	{
+		return true;
+	}
 
-    if (!strncmp("OMX.", componentName, 4)) {
-        return false;
-    }
+	if (!strncmp("OMX.", componentName, 4)) 
+	{
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
 // A sort order in which OMX software codecs are first, followed
 // by other (non-OMX) software codecs, followed by everything else.
-static int CompareSoftwareCodecsFirst(
-        const String8 *elem1, const String8 *elem2) {
-    bool isOMX1 = !strncmp(elem1->string(), "OMX.", 4);
-    bool isOMX2 = !strncmp(elem2->string(), "OMX.", 4);
+static int CompareSoftwareCodecsFirst(const String8 *elem1, const String8 *elem2) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	bool isOMX1 = !strncmp(elem1->string(), "OMX.", 4);
+	bool isOMX2 = !strncmp(elem2->string(), "OMX.", 4);
 
-    bool isSoftwareCodec1 = IsSoftwareCodec(elem1->string());
-    bool isSoftwareCodec2 = IsSoftwareCodec(elem2->string());
+	bool isSoftwareCodec1 = IsSoftwareCodec(elem1->string());
+	bool isSoftwareCodec2 = IsSoftwareCodec(elem2->string());
 
-    if (isSoftwareCodec1) {
-        if (!isSoftwareCodec2) { return -1; }
+	if (isSoftwareCodec1) 
+	{
+		if (!isSoftwareCodec2) { return -1; }
 
-        if (isOMX1) {
-            if (isOMX2) { return 0; }
+		if (isOMX1) 
+		{
+			if (isOMX2) { return 0; }
 
-            return -1;
-        } else {
-            if (isOMX2) { return 0; }
+			return -1;
+		} 
+		else
+		{
+			if (isOMX2) { return 0; }
 
-            return 1;
-        }
+			return 1;
+		}
 
-        return -1;
-    }
+		return -1;
+	}
 
-    if (isSoftwareCodec2) {
-        return 1;
-    }
+	if (isSoftwareCodec2) 
+	{
+		return 1;
+	}
 
-    return 0;
+	return 0;
 }
 
 // static
-uint32_t OMXCodec::getComponentQuirks(
-        const char *componentName, bool isEncoder) {
-    uint32_t quirks = 0;
+uint32_t OMXCodec::getComponentQuirks( const char *componentName, bool isEncoder) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	uint32_t quirks = 0;
 
-    if (!strcmp(componentName, "OMX.Nvidia.amr.decoder") ||
-         !strcmp(componentName, "OMX.Nvidia.amrwb.decoder") ||
-         !strcmp(componentName, "OMX.Nvidia.aac.decoder") ||
-         !strcmp(componentName, "OMX.Nvidia.mp3.decoder")) {
-        quirks |= kDecoderLiesAboutNumberOfChannels;
-    }
+	if (!strcmp(componentName, "OMX.Nvidia.amr.decoder") ||
+							!strcmp(componentName, "OMX.Nvidia.amrwb.decoder") ||
+							!strcmp(componentName, "OMX.Nvidia.aac.decoder") ||
+							!strcmp(componentName, "OMX.Nvidia.mp3.decoder")) 
+	{
+		quirks |= kDecoderLiesAboutNumberOfChannels;
+	}
 
-    if (!strcmp(componentName, "OMX.TI.MP3.decode")) {
-        quirks |= kNeedsFlushBeforeDisable;
-        quirks |= kDecoderLiesAboutNumberOfChannels;
-    }
-    if (!strcmp(componentName, "OMX.TI.AAC.decode")) {
-        quirks |= kNeedsFlushBeforeDisable;
-        quirks |= kRequiresFlushCompleteEmulation;
-        quirks |= kSupportsMultipleFramesPerInputBuffer;
-    }
-    if (!strncmp(componentName, "OMX.qcom.video.encoder.", 23)) {
-        quirks |= kRequiresLoadedToIdleAfterAllocation;
-        quirks |= kRequiresAllocateBufferOnInputPorts;
-        quirks |= kRequiresAllocateBufferOnOutputPorts;
-        if (!strncmp(componentName, "OMX.qcom.video.encoder.avc", 26)) {
+	if (!strcmp(componentName, "OMX.TI.MP3.decode"))
+	{
+		quirks |= kNeedsFlushBeforeDisable;
+		quirks |= kDecoderLiesAboutNumberOfChannels;
+	}
+	
+	if (!strcmp(componentName, "OMX.TI.AAC.decode")) 
+	{
+		quirks |= kNeedsFlushBeforeDisable;
+		quirks |= kRequiresFlushCompleteEmulation;
+		quirks |= kSupportsMultipleFramesPerInputBuffer;
+	}
+	
+	if (!strncmp(componentName, "OMX.qcom.video.encoder.", 23)) 
+	{
+		quirks |= kRequiresLoadedToIdleAfterAllocation;
+		quirks |= kRequiresAllocateBufferOnInputPorts;
+		quirks |= kRequiresAllocateBufferOnOutputPorts;
+		if (!strncmp(componentName, "OMX.qcom.video.encoder.avc", 26)) 
+		{
+			// The AVC encoder advertises the size of output buffers
+			// based on the input video resolution and assumes
+			// the worst/least compression ratio is 0.5. It is found that
+			// sometimes, the output buffer size is larger than
+			// size advertised by the encoder.
+			quirks |= kRequiresLargerEncoderOutputBuffer;
+		}
+	}
+	
+	if (!strncmp(componentName, "OMX.qcom.7x30.video.encoder.", 28)) 
+	{
+	}
+	
+	if (!strncmp(componentName, "OMX.qcom.video.decoder.", 23)) 
+	{
+		quirks |= kRequiresAllocateBufferOnOutputPorts;
+		quirks |= kDefersOutputBufferAllocation;
+	}
+	if (!strncmp(componentName, "OMX.qcom.7x30.video.decoder.", 28))
+	{
+		quirks |= kRequiresAllocateBufferOnInputPorts;
+		quirks |= kRequiresAllocateBufferOnOutputPorts;
+		quirks |= kDefersOutputBufferAllocation;
+	}
 
-            // The AVC encoder advertises the size of output buffers
-            // based on the input video resolution and assumes
-            // the worst/least compression ratio is 0.5. It is found that
-            // sometimes, the output buffer size is larger than
-            // size advertised by the encoder.
-            quirks |= kRequiresLargerEncoderOutputBuffer;
-        }
-    }
-    if (!strncmp(componentName, "OMX.qcom.7x30.video.encoder.", 28)) {
-    }
-    if (!strncmp(componentName, "OMX.qcom.video.decoder.", 23)) {
-        quirks |= kRequiresAllocateBufferOnOutputPorts;
-        quirks |= kDefersOutputBufferAllocation;
-    }
-    if (!strncmp(componentName, "OMX.qcom.7x30.video.decoder.", 28)) {
-        quirks |= kRequiresAllocateBufferOnInputPorts;
-        quirks |= kRequiresAllocateBufferOnOutputPorts;
-        quirks |= kDefersOutputBufferAllocation;
-    }
+	if (!strcmp(componentName, "OMX.TI.DUCATI1.VIDEO.DECODER"))
+	{
+		quirks |= kRequiresAllocateBufferOnInputPorts;
+		quirks |= kRequiresAllocateBufferOnOutputPorts;
+	}
 
-    if (!strcmp(componentName, "OMX.TI.DUCATI1.VIDEO.DECODER")) {
-        quirks |= kRequiresAllocateBufferOnInputPorts;
-        quirks |= kRequiresAllocateBufferOnOutputPorts;
-    }
+	// FIXME:
+	// Remove the quirks after the work is done.
+	else if (!strcmp(componentName, "OMX.TI.DUCATI1.VIDEO.MPEG4E") || !strcmp(componentName, "OMX.TI.DUCATI1.VIDEO.H264E")) 
+	{
+		quirks |= kRequiresAllocateBufferOnInputPorts;
+		quirks |= kRequiresAllocateBufferOnOutputPorts;
+	}
+	else if (!strncmp(componentName, "OMX.TI.", 7)) 
+	{
+		// Apparently I must not use OMX_UseBuffer on either input or
+		// output ports on any of the TI components or quote:
+		// "(I) may have unexpected problem (sic) which can be timing related
+		//  and hard to reproduce."
 
-    // FIXME:
-    // Remove the quirks after the work is done.
-    else if (!strcmp(componentName, "OMX.TI.DUCATI1.VIDEO.MPEG4E") ||
-             !strcmp(componentName, "OMX.TI.DUCATI1.VIDEO.H264E")) {
+		quirks |= kRequiresAllocateBufferOnInputPorts;
+		quirks |= kRequiresAllocateBufferOnOutputPorts;
+		if (!strncmp(componentName, "OMX.TI.Video.encoder", 20)) 
+		{
+			quirks |= kAvoidMemcopyInputRecordingFrames;
+		}
+	}
 
-        quirks |= kRequiresAllocateBufferOnInputPorts;
-        quirks |= kRequiresAllocateBufferOnOutputPorts;
-    }
-    else if (!strncmp(componentName, "OMX.TI.", 7)) {
-        // Apparently I must not use OMX_UseBuffer on either input or
-        // output ports on any of the TI components or quote:
-        // "(I) may have unexpected problem (sic) which can be timing related
-        //  and hard to reproduce."
+	if (!strcmp(componentName, "OMX.TI.Video.Decoder")) 
+	{
+		quirks |= kInputBufferSizesAreBogus;
+	}
 
-        quirks |= kRequiresAllocateBufferOnInputPorts;
-        quirks |= kRequiresAllocateBufferOnOutputPorts;
-        if (!strncmp(componentName, "OMX.TI.Video.encoder", 20)) {
-            quirks |= kAvoidMemcopyInputRecordingFrames;
-        }
-    }
+	if (!strncmp(componentName, "OMX.SEC.", 8) && !isEncoder) 
+	{
+		// These output buffers contain no video data, just some
+		// opaque information that allows the overlay to display their
+		// contents.
+		quirks |= kOutputBuffersAreUnreadable;
+	}
 
-    if (!strcmp(componentName, "OMX.TI.Video.Decoder")) {
-        quirks |= kInputBufferSizesAreBogus;
-    }
-
-    if (!strncmp(componentName, "OMX.SEC.", 8) && !isEncoder) {
-        // These output buffers contain no video data, just some
-        // opaque information that allows the overlay to display their
-        // contents.
-        quirks |= kOutputBuffersAreUnreadable;
-    }
-
-    return quirks;
+	return quirks;
 }
 
 // static
-void OMXCodec::findMatchingCodecs(
-        const char *mime,
-        bool createEncoder, const char *matchComponentName,
-        uint32_t flags,
-        Vector<String8> *matchingCodecs) {
-    matchingCodecs->clear();
+void OMXCodec::findMatchingCodecs( const char *mime,
+										bool createEncoder,
+										const char *matchComponentName,
+										uint32_t flags,
+										Vector<String8> *matchingCodecs) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	matchingCodecs->clear();
 
-    for (int index = 0;; ++index) {
-        const char *componentName;
+	for (int index = 0;; ++index) 
+	{
+		const char *componentName;
 
-        if (createEncoder) {
-            componentName = GetCodec(
-                    kEncoderInfo,
-                    sizeof(kEncoderInfo) / sizeof(kEncoderInfo[0]),
-                    mime, index);
-        } else {
-            componentName = GetCodec(
-                    kDecoderInfo,
-                    sizeof(kDecoderInfo) / sizeof(kDecoderInfo[0]),
-                    mime, index);
-        }
+		if (createEncoder) 
+		{
+			componentName = GetCodec(kEncoderInfo,
+										sizeof(kEncoderInfo) / sizeof(kEncoderInfo[0]),
+										mime, index);
+		}
+		else
+		{
+			componentName = GetCodec( kDecoderInfo,
+										sizeof(kDecoderInfo) / sizeof(kDecoderInfo[0]),
+										mime, index);
+		}
 
-        if (!componentName) {
-            break;
-        }
+		if (!componentName) 
+		{
+			break;
+		}
 
-        // If a specific codec is requested, skip the non-matching ones.
-        if (matchComponentName && strcmp(componentName, matchComponentName)) {
-            continue;
-        }
+		// If a specific codec is requested, skip the non-matching ones.
+		if (matchComponentName && strcmp(componentName, matchComponentName)) 
+		{
+			continue;
+		}
 
-        // When requesting software-only codecs, only push software codecs
-        // When requesting hardware-only codecs, only push hardware codecs
-        // When there is request neither for software-only nor for
-        // hardware-only codecs, push all codecs
-        if (((flags & kSoftwareCodecsOnly) &&   IsSoftwareCodec(componentName)) ||
-            ((flags & kHardwareCodecsOnly) &&  !IsSoftwareCodec(componentName)) ||
-            (!(flags & (kSoftwareCodecsOnly | kHardwareCodecsOnly)))) {
+		// When requesting software-only codecs, only push software codecs
+		// When requesting hardware-only codecs, only push hardware codecs
+		// When there is request neither for software-only nor for
+		// hardware-only codecs, push all codecs
+		if (((flags & kSoftwareCodecsOnly) &&   IsSoftwareCodec(componentName)) ||
+									((flags & kHardwareCodecsOnly) &&  !IsSoftwareCodec(componentName)) ||
+									(!(flags & (kSoftwareCodecsOnly | kHardwareCodecsOnly)))) 
+		{
+			matchingCodecs->push(String8(componentName));
+		}
+	}
 
-            matchingCodecs->push(String8(componentName));
-        }
-    }
-
-    if (flags & kPreferSoftwareCodecs) {
-        matchingCodecs->sort(CompareSoftwareCodecsFirst);
-    }
+	if (flags & kPreferSoftwareCodecs) 
+	{
+		matchingCodecs->sort(CompareSoftwareCodecsFirst);
+	}
 }
 
 // static
-sp<MediaSource> OMXCodec::Create(
-        const sp<IOMX> &omx,
-        const sp<MetaData> &meta, bool createEncoder,
-        const sp<MediaSource> &source,
-        const char *matchComponentName,
-        uint32_t flags,
-        const sp<ANativeWindow> &nativeWindow) {
-    int32_t requiresSecureBuffers;
-    if (source->getFormat()->findInt32(
-                kKeyRequiresSecureBuffers,
-                &requiresSecureBuffers)
-            && requiresSecureBuffers) {
-        flags |= kIgnoreCodecSpecificData;
-        flags |= kUseSecureInputBuffers;
-    }
+sp<MediaSource> OMXCodec::Create(const sp<IOMX> &omx,
+									const sp<MetaData> &meta, bool createEncoder,
+									const sp<MediaSource> &source,
+									const char *matchComponentName,
+									uint32_t flags,
+									const sp<ANativeWindow> &nativeWindow)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	int32_t requiresSecureBuffers;
+	if (source->getFormat()->findInt32(kKeyRequiresSecureBuffers,&requiresSecureBuffers)&& requiresSecureBuffers) 
+	{
+		flags |= kIgnoreCodecSpecificData;
+		flags |= kUseSecureInputBuffers;
+	}
 
-    const char *mime;
-    bool success = meta->findCString(kKeyMIMEType, &mime);
-    CHECK(success);
+	const char *mime;
+	bool success = meta->findCString(kKeyMIMEType, &mime);
+	CHECK(success);
 
-    Vector<String8> matchingCodecs;
-    findMatchingCodecs(
-            mime, createEncoder, matchComponentName, flags, &matchingCodecs);
+	Vector<String8> matchingCodecs;
+	
+	findMatchingCodecs(mime, createEncoder, matchComponentName, flags, &matchingCodecs);
 
-    if (matchingCodecs.isEmpty()) {
-        return NULL;
-    }
+	if (matchingCodecs.isEmpty()) 
+	{
+		return NULL;
+	}
 
-    sp<OMXCodecObserver> observer = new OMXCodecObserver;
-    IOMX::node_id node = 0;
+	sp<OMXCodecObserver> observer = new OMXCodecObserver;
+	IOMX::node_id node = 0;
 
-    for (size_t i = 0; i < matchingCodecs.size(); ++i) {
-        const char *componentNameBase = matchingCodecs[i].string();
-        const char *componentName = componentNameBase;
+	for (size_t i = 0; i < matchingCodecs.size(); ++i) 
+	{
+		const char *componentNameBase = matchingCodecs[i].string();
+		const char *componentName = componentNameBase;
 
-        AString tmp;
-        if (flags & kUseSecureInputBuffers) {
-            tmp = componentNameBase;
-            tmp.append(".secure");
+		AString tmp;
+		if (flags & kUseSecureInputBuffers) 
+		{
+			tmp = componentNameBase;
+			tmp.append(".secure");
 
-            componentName = tmp.c_str();
-        }
+			componentName = tmp.c_str();
+		}
 
-        if (createEncoder) {
-            sp<MediaSource> softwareCodec =
-                InstantiateSoftwareEncoder(componentName, source, meta);
+		if (createEncoder) 
+		{
+			sp<MediaSource> softwareCodec =  InstantiateSoftwareEncoder(componentName, source, meta);
 
-            if (softwareCodec != NULL) {
-                ALOGV("Successfully allocated software codec '%s'", componentName);
+			if (softwareCodec != NULL)
+			{
+				ALOGV("Successfully allocated software codec '%s'", componentName);
 
-                return softwareCodec;
-            }
-        }
+				return softwareCodec;
+			}
+		}
 
-        ALOGV("Attempting to allocate OMX node '%s'", componentName);
+		ALOGV("Attempting to allocate OMX node '%s'", componentName);
 
-        uint32_t quirks = getComponentQuirks(componentNameBase, createEncoder);
+		uint32_t quirks = getComponentQuirks(componentNameBase, createEncoder);
 
-        if (!createEncoder
-                && (quirks & kOutputBuffersAreUnreadable)
-                && (flags & kClientNeedsFramebuffer)) {
-            if (strncmp(componentName, "OMX.SEC.", 8)) {
-                // For OMX.SEC.* decoders we can enable a special mode that
-                // gives the client access to the framebuffer contents.
+		if (!createEncoder&& (quirks & kOutputBuffersAreUnreadable)&& (flags & kClientNeedsFramebuffer)) 
+		{
+			if (strncmp(componentName, "OMX.SEC.", 8))
+			{
+				// For OMX.SEC.* decoders we can enable a special mode that
+				// gives the client access to the framebuffer contents.
 
-                ALOGW("Component '%s' does not give the client access to "
-                     "the framebuffer contents. Skipping.",
-                     componentName);
+				ALOGW("Component '%s' does not give the client access to " "the framebuffer contents. Skipping.",componentName);
 
-                continue;
-            }
-        }
+				continue;
+			}
+		}
 
-        status_t err = omx->allocateNode(componentName, observer, &node);
-        if (err == OK) {
-            ALOGV("Successfully allocated OMX node '%s'", componentName);
+		status_t err = omx->allocateNode(componentName, observer, &node);
+		if (err == OK) 
+		{
+			ALOGV("Successfully allocated OMX node '%s'", componentName);
 
-            sp<OMXCodec> codec = new OMXCodec(
-                    omx, node, quirks, flags,
-                    createEncoder, mime, componentName,
-                    source, nativeWindow);
+			sp<OMXCodec> codec = new OMXCodec(	omx, node, quirks, flags,
+												createEncoder, mime, componentName,
+												source, nativeWindow);
 
-            observer->setCodec(codec);
+			observer->setCodec(codec);
 
-            err = codec->configureCodec(meta);
+			err = codec->configureCodec(meta);
 
-            if (err == OK) {
-                if (!strcmp("OMX.Nvidia.mpeg2v.decode", componentName)) {
-                    codec->mFlags |= kOnlySubmitOneInputBufferAtOneTime;
-                }
+			if (err == OK) 
+			{
+				if (!strcmp("OMX.Nvidia.mpeg2v.decode", componentName)) 
+				{
+					codec->mFlags |= kOnlySubmitOneInputBufferAtOneTime;
+				}
 
-                return codec;
-            }
+				return codec;
+			}
 
-            ALOGV("Failed to configure codec '%s'", componentName);
-        }
-    }
+			ALOGV("Failed to configure codec '%s'", componentName);
+		}
+	}
 
-    return NULL;
+	return NULL;
 }
 
-status_t OMXCodec::parseAVCCodecSpecificData(
-        const void *data, size_t size,
-        unsigned *profile, unsigned *level) {
-    const uint8_t *ptr = (const uint8_t *)data;
+status_t OMXCodec::parseAVCCodecSpecificData(const void *data, size_t size, unsigned *profile, unsigned *level)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	const uint8_t *ptr = (const uint8_t *)data;
 
-    // verify minimum size and configurationVersion == 1.
-    if (size < 7 || ptr[0] != 1) {
-        return ERROR_MALFORMED;
-    }
+	// verify minimum size and configurationVersion == 1.
+	if (size < 7 || ptr[0] != 1)
+	{
+		return ERROR_MALFORMED;
+	}
 
-    *profile = ptr[1];
-    *level = ptr[3];
+	*profile = ptr[1];
+	*level = ptr[3];
 
-    // There is decodable content out there that fails the following
-    // assertion, let's be lenient for now...
-    // CHECK((ptr[4] >> 2) == 0x3f);  // reserved
+	// There is decodable content out there that fails the following
+	// assertion, let's be lenient for now...
+	// CHECK((ptr[4] >> 2) == 0x3f);  // reserved
 
-    size_t lengthSize = 1 + (ptr[4] & 3);
+	size_t lengthSize = 1 + (ptr[4] & 3);
 
-    // commented out check below as H264_QVGA_500_NO_AUDIO.3gp
-    // violates it...
-    // CHECK((ptr[5] >> 5) == 7);  // reserved
+	// commented out check below as H264_QVGA_500_NO_AUDIO.3gp
+	// violates it...
+	// CHECK((ptr[5] >> 5) == 7);  // reserved
 
-    size_t numSeqParameterSets = ptr[5] & 31;
+	size_t numSeqParameterSets = ptr[5] & 31;
 
-    ptr += 6;
-    size -= 6;
+	ptr += 6;
+	size -= 6;
 
-    for (size_t i = 0; i < numSeqParameterSets; ++i) {
-        if (size < 2) {
-            return ERROR_MALFORMED;
-        }
+	for (size_t i = 0; i < numSeqParameterSets; ++i) 
+	{
+		if (size < 2)
+		{
+			return ERROR_MALFORMED;
+		}
 
-        size_t length = U16_AT(ptr);
+		size_t length = U16_AT(ptr);
 
-        ptr += 2;
-        size -= 2;
+		ptr += 2;
+		size -= 2;
 
-        if (size < length) {
-            return ERROR_MALFORMED;
-        }
+		if (size < length) 
+		{
+			return ERROR_MALFORMED;
+		}
 
-        addCodecSpecificData(ptr, length);
+		addCodecSpecificData(ptr, length);
 
-        ptr += length;
-        size -= length;
-    }
+		ptr += length;
+		size -= length;
+	}
 
-    if (size < 1) {
-        return ERROR_MALFORMED;
-    }
+	if (size < 1) 
+	{
+		return ERROR_MALFORMED;
+	}
 
-    size_t numPictureParameterSets = *ptr;
-    ++ptr;
-    --size;
+	size_t numPictureParameterSets = *ptr;
+	++ptr;
+	--size;
 
-    for (size_t i = 0; i < numPictureParameterSets; ++i) {
-        if (size < 2) {
-            return ERROR_MALFORMED;
-        }
+	for (size_t i = 0; i < numPictureParameterSets; ++i)
+	{
+		if (size < 2) 
+		{
+			return ERROR_MALFORMED;
+		}
 
-        size_t length = U16_AT(ptr);
+		size_t length = U16_AT(ptr);
 
-        ptr += 2;
-        size -= 2;
+		ptr += 2;
+		size -= 2;
 
-        if (size < length) {
-            return ERROR_MALFORMED;
-        }
+		if (size < length)
+		{
+			return ERROR_MALFORMED;
+		}
 
-        addCodecSpecificData(ptr, length);
+		addCodecSpecificData(ptr, length);
 
-        ptr += length;
-        size -= length;
-    }
+		ptr += length;
+		size -= length;
+	}
 
-    return OK;
+	return OK;
 }
 
 status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {

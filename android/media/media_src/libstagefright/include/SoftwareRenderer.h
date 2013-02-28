@@ -26,31 +26,32 @@ namespace android {
 
 struct MetaData;
 
-class SoftwareRenderer {
+/* »ÌÃÂµƒ‰÷»æ∆˜¿‡*/
+class SoftwareRenderer
+{
 public:
-    SoftwareRenderer(
-            const sp<ANativeWindow> &nativeWindow, const sp<MetaData> &meta);
+	SoftwareRenderer(const sp<ANativeWindow> &nativeWindow, const sp<MetaData> &meta);
 
-    ~SoftwareRenderer();
+	~SoftwareRenderer();
 
-    void render(
-            const void *data, size_t size, void *platformPrivate);
+	void render(const void *data, size_t size, void *platformPrivate);
 
 private:
-    enum YUVMode {
-        None,
-    };
+	enum YUVMode
+	{
+		None,
+	};
 
-    OMX_COLOR_FORMATTYPE mColorFormat;
-    ColorConverter *mConverter;
-    YUVMode mYUVMode;
-    sp<ANativeWindow> mNativeWindow;
-    int32_t mWidth, mHeight;
-    int32_t mCropLeft, mCropTop, mCropRight, mCropBottom;
-    int32_t mCropWidth, mCropHeight;
+	OMX_COLOR_FORMATTYPE mColorFormat;
+	ColorConverter *mConverter;
+	YUVMode mYUVMode;
+	sp<ANativeWindow> mNativeWindow;
+	int32_t mWidth, mHeight;
+	int32_t mCropLeft, mCropTop, mCropRight, mCropBottom;
+	int32_t mCropWidth, mCropHeight;
 
-    SoftwareRenderer(const SoftwareRenderer &);
-    SoftwareRenderer &operator=(const SoftwareRenderer &);
+	SoftwareRenderer(const SoftwareRenderer &);
+	SoftwareRenderer &operator=(const SoftwareRenderer &);
 };
 
 }  // namespace android
