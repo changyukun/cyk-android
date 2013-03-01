@@ -411,377 +411,403 @@ IMPLEMENT_META_INTERFACE(OMX, "android.hardware.IOMX");
             return PERMISSION_DENIED; \
         } } while (0)
 
-status_t BnOMX::onTransact(
-    uint32_t code, const Parcel &data, Parcel *reply, uint32_t flags) {
-    switch (code) {
-        case LIVES_LOCALLY:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-            reply->writeInt32(livesLocally((pid_t)data.readInt32()));
-
-            return OK;
-        }
-
-        case LIST_NODES:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            List<ComponentInfo> list;
-            listNodes(&list);
-
-            reply->writeInt32(list.size());
-            for (List<ComponentInfo>::iterator it = list.begin();
-                 it != list.end(); ++it) {
-                ComponentInfo &cur = *it;
-
-                reply->writeString8(cur.mName);
-                reply->writeInt32(cur.mRoles.size());
-                for (List<String8>::iterator role_it = cur.mRoles.begin();
-                     role_it != cur.mRoles.end(); ++role_it) {
-                    reply->writeString8(*role_it);
-                }
-            }
-
-            return NO_ERROR;
-        }
-
-        case ALLOCATE_NODE:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            const char *name = data.readCString();
+status_t BnOMX::onTransact(uint32_t code, const Parcel &data, Parcel *reply, uint32_t flags) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、由于OMX 是继承BnOMX 类的，所以此处的方法应该调用的是子类的方法，如OMX::xxxxxx
+*/
+	switch (code) 
+	{
+		case LIVES_LOCALLY:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+				reply->writeInt32(livesLocally((pid_t)data.readInt32()));
+
+				return OK;
+			}
+
+		case LIST_NODES:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				List<ComponentInfo> list;
+				listNodes(&list);
+
+				reply->writeInt32(list.size());
+				for (List<ComponentInfo>::iterator it = list.begin(); it != list.end(); ++it) 
+				{
+					ComponentInfo &cur = *it;
+
+					reply->writeString8(cur.mName);
+					reply->writeInt32(cur.mRoles.size());
+					for (List<String8>::iterator role_it = cur.mRoles.begin();role_it != cur.mRoles.end(); ++role_it) 
+					{
+						reply->writeString8(*role_it);
+					}
+				}
+
+				return NO_ERROR;
+			}
+
+		case ALLOCATE_NODE:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				const char *name = data.readCString();
+
+				sp<IOMXObserver> observer =
+				interface_cast<IOMXObserver>(data.readStrongBinder());
+
+				node_id node;
+
+				status_t err = allocateNode(name, observer, &node);
+				reply->writeInt32(err);
+				if (err == OK)
+				{
+					reply->writeIntPtr((intptr_t)node);
+				}
+
+				return NO_ERROR;
+			}
+
+		case FREE_NODE:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				node_id node = (void*)data.readIntPtr();
+
+				reply->writeInt32(freeNode(node));
+
+				return NO_ERROR;
+			}
+
+		case SEND_COMMAND:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				node_id node = (void*)data.readIntPtr();
+
+				OMX_COMMANDTYPE cmd = static_cast<OMX_COMMANDTYPE>(data.readInt32());
+
+				OMX_S32 param = data.readInt32();
+				reply->writeInt32(sendCommand(node, cmd, param));
+
+				return NO_ERROR;
+			}
+
+		case GET_PARAMETER:
+		case SET_PARAMETER:
+		case GET_CONFIG:
+		case SET_CONFIG:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				node_id node = (void*)data.readIntPtr();
+				OMX_INDEXTYPE index = static_cast<OMX_INDEXTYPE>(data.readInt32());
+
+				size_t size = data.readInt32();
+
+				void *params = malloc(size);
+				data.read(params, size);
+
+				status_t err;
+				switch (code)
+				{
+					case GET_PARAMETER:
+						err = getParameter(node, index, params, size);
+						break;
+					case SET_PARAMETER:
+						err = setParameter(node, index, params, size);
+						break;
+					case GET_CONFIG:
+						err = getConfig(node, index, params, size);
+						break;
+					case SET_CONFIG:
+						err = setConfig(node, index, params, size);
+						break;
+					default:
+						TRESPASS();
+				}
+
+				reply->writeInt32(err);
+
+				if ((code == GET_PARAMETER || code == GET_CONFIG) && err == OK) 
+				{
+					reply->write(params, size);
+				}
+
+				free(params);
+				params = NULL;
+
+				return NO_ERROR;
+			}
+
+		case GET_STATE:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				node_id node = (void*)data.readIntPtr();
+				OMX_STATETYPE state = OMX_StateInvalid;
+
+				status_t err = getState(node, &state);
+				reply->writeInt32(state);
+				reply->writeInt32(err);
+
+				return NO_ERROR;
+			}
+
+		case ENABLE_GRAPHIC_BUFFERS:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				node_id node = (void*)data.readIntPtr();
+				OMX_U32 port_index = data.readInt32();
+				OMX_BOOL enable = (OMX_BOOL)data.readInt32();
+
+				status_t err = enableGraphicBuffers(node, port_index, enable);
+				reply->writeInt32(err);
+
+				return NO_ERROR;
+			}
+
+		case GET_GRAPHIC_BUFFER_USAGE:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				node_id node = (void*)data.readIntPtr();
+				OMX_U32 port_index = data.readInt32();
+
+				OMX_U32 usage = 0;
+				status_t err = getGraphicBufferUsage(node, port_index, &usage);
+				reply->writeInt32(err);
+				reply->writeInt32(usage);
+
+				return NO_ERROR;
+			}
+
+		case USE_BUFFER:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				node_id node = (void*)data.readIntPtr();
+				OMX_U32 port_index = data.readInt32();
+				sp<IMemory> params =
+				interface_cast<IMemory>(data.readStrongBinder());
+
+				buffer_id buffer;
+				status_t err = useBuffer(node, port_index, params, &buffer);
+				reply->writeInt32(err);
+
+				if (err == OK) 
+				{
+					reply->writeIntPtr((intptr_t)buffer);
+				}
+
+				return NO_ERROR;
+			}
+
+		case USE_GRAPHIC_BUFFER:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				node_id node = (void*)data.readIntPtr();
+				OMX_U32 port_index = data.readInt32();
+				sp<GraphicBuffer> graphicBuffer = new GraphicBuffer();
+				data.read(*graphicBuffer);
+
+				buffer_id buffer;
+				status_t err = useGraphicBuffer(
+				node, port_index, graphicBuffer, &buffer);
+				reply->writeInt32(err);
+
+				if (err == OK)
+				{
+					reply->writeIntPtr((intptr_t)buffer);
+				}
+
+				return NO_ERROR;
+			}
+
+		case STORE_META_DATA_IN_BUFFERS:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
+
+				node_id node = (void*)data.readIntPtr();
+				OMX_U32 port_index = data.readInt32();
+				OMX_BOOL enable = (OMX_BOOL)data.readInt32();
 
-            sp<IOMXObserver> observer =
-                interface_cast<IOMXObserver>(data.readStrongBinder());
-
-            node_id node;
+				status_t err = storeMetaDataInBuffers(node, port_index, enable);
+				reply->writeInt32(err);
 
-            status_t err = allocateNode(name, observer, &node);
-            reply->writeInt32(err);
-            if (err == OK) {
-                reply->writeIntPtr((intptr_t)node);
-            }
+				return NO_ERROR;
+			}
+
+		case ALLOC_BUFFER:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
 
-            return NO_ERROR;
-        }
+				node_id node = (void*)data.readIntPtr();
+				OMX_U32 port_index = data.readInt32();
+				size_t size = data.readInt32();
 
-        case FREE_NODE:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
+				buffer_id buffer;
+				void *buffer_data;
+				status_t err = allocateBuffer(node, port_index, size, &buffer, &buffer_data);
+				reply->writeInt32(err);
 
-            node_id node = (void*)data.readIntPtr();
+				if (err == OK) 
+				{
+					reply->writeIntPtr((intptr_t)buffer);
+					reply->writeIntPtr((intptr_t)buffer_data);
+				}
 
-            reply->writeInt32(freeNode(node));
+				return NO_ERROR;
+			}
 
-            return NO_ERROR;
-        }
+		case ALLOC_BUFFER_WITH_BACKUP:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
 
-        case SEND_COMMAND:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
+				node_id node = (void*)data.readIntPtr();
+				OMX_U32 port_index = data.readInt32();
+				sp<IMemory> params = interface_cast<IMemory>(data.readStrongBinder());
 
-            node_id node = (void*)data.readIntPtr();
+				buffer_id buffer;
+				status_t err = allocateBufferWithBackup( node, port_index, params, &buffer);
 
-            OMX_COMMANDTYPE cmd =
-                static_cast<OMX_COMMANDTYPE>(data.readInt32());
+				reply->writeInt32(err);
 
-            OMX_S32 param = data.readInt32();
-            reply->writeInt32(sendCommand(node, cmd, param));
+				if (err == OK) 
+				{
+					reply->writeIntPtr((intptr_t)buffer);
+				}
 
-            return NO_ERROR;
-        }
+				return NO_ERROR;
+			}
 
-        case GET_PARAMETER:
-        case SET_PARAMETER:
-        case GET_CONFIG:
-        case SET_CONFIG:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
+		case FREE_BUFFER:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
 
-            node_id node = (void*)data.readIntPtr();
-            OMX_INDEXTYPE index = static_cast<OMX_INDEXTYPE>(data.readInt32());
+				node_id node = (void*)data.readIntPtr();
+				OMX_U32 port_index = data.readInt32();
+				buffer_id buffer = (void*)data.readIntPtr();
+				reply->writeInt32(freeBuffer(node, port_index, buffer));
 
-            size_t size = data.readInt32();
+				return NO_ERROR;
+			}
 
-            void *params = malloc(size);
-            data.read(params, size);
+		case FILL_BUFFER:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
 
-            status_t err;
-            switch (code) {
-                case GET_PARAMETER:
-                    err = getParameter(node, index, params, size);
-                    break;
-                case SET_PARAMETER:
-                    err = setParameter(node, index, params, size);
-                    break;
-                case GET_CONFIG:
-                    err = getConfig(node, index, params, size);
-                    break;
-                case SET_CONFIG:
-                    err = setConfig(node, index, params, size);
-                    break;
-                default:
-                    TRESPASS();
-            }
-
-            reply->writeInt32(err);
-
-            if ((code == GET_PARAMETER || code == GET_CONFIG) && err == OK) {
-                reply->write(params, size);
-            }
-
-            free(params);
-            params = NULL;
-
-            return NO_ERROR;
-        }
+				node_id node = (void*)data.readIntPtr();
+				buffer_id buffer = (void*)data.readIntPtr();
+				reply->writeInt32(fillBuffer(node, buffer));
 
-        case GET_STATE:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
+				return NO_ERROR;
+			}
 
-            node_id node = (void*)data.readIntPtr();
-            OMX_STATETYPE state = OMX_StateInvalid;
+		case EMPTY_BUFFER:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
 
-            status_t err = getState(node, &state);
-            reply->writeInt32(state);
-            reply->writeInt32(err);
-
-            return NO_ERROR;
-        }
-
-        case ENABLE_GRAPHIC_BUFFERS:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            node_id node = (void*)data.readIntPtr();
-            OMX_U32 port_index = data.readInt32();
-            OMX_BOOL enable = (OMX_BOOL)data.readInt32();
-
-            status_t err = enableGraphicBuffers(node, port_index, enable);
-            reply->writeInt32(err);
-
-            return NO_ERROR;
-        }
-
-        case GET_GRAPHIC_BUFFER_USAGE:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            node_id node = (void*)data.readIntPtr();
-            OMX_U32 port_index = data.readInt32();
-
-            OMX_U32 usage = 0;
-            status_t err = getGraphicBufferUsage(node, port_index, &usage);
-            reply->writeInt32(err);
-            reply->writeInt32(usage);
+				node_id node = (void*)data.readIntPtr();
+				buffer_id buffer = (void*)data.readIntPtr();
+				OMX_U32 range_offset = data.readInt32();
+				OMX_U32 range_length = data.readInt32();
+				OMX_U32 flags = data.readInt32();
+				OMX_TICKS timestamp = data.readInt64();
 
-            return NO_ERROR;
-        }
+				reply->writeInt32(
+				emptyBuffer(node, buffer, range_offset, range_length,flags, timestamp));
 
-        case USE_BUFFER:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
+				return NO_ERROR;
+			}
 
-            node_id node = (void*)data.readIntPtr();
-            OMX_U32 port_index = data.readInt32();
-            sp<IMemory> params =
-                interface_cast<IMemory>(data.readStrongBinder());
+		case GET_EXTENSION_INDEX:
+			{
+				CHECK_INTERFACE(IOMX, data, reply);
 
-            buffer_id buffer;
-            status_t err = useBuffer(node, port_index, params, &buffer);
-            reply->writeInt32(err);
+				node_id node = (void*)data.readIntPtr();
+				const char *parameter_name = data.readCString();
 
-            if (err == OK) {
-                reply->writeIntPtr((intptr_t)buffer);
-            }
+				OMX_INDEXTYPE index;
+				status_t err = getExtensionIndex(node, parameter_name, &index);
 
-            return NO_ERROR;
-        }
+				reply->writeInt32(err);
 
-        case USE_GRAPHIC_BUFFER:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
+				if (err == OK) 
+				{
+					reply->writeInt32(index);
+				}
 
-            node_id node = (void*)data.readIntPtr();
-            OMX_U32 port_index = data.readInt32();
-            sp<GraphicBuffer> graphicBuffer = new GraphicBuffer();
-            data.read(*graphicBuffer);
+				return OK;
+			}
 
-            buffer_id buffer;
-            status_t err = useGraphicBuffer(
-                    node, port_index, graphicBuffer, &buffer);
-            reply->writeInt32(err);
-
-            if (err == OK) {
-                reply->writeIntPtr((intptr_t)buffer);
-            }
-
-            return NO_ERROR;
-        }
-
-        case STORE_META_DATA_IN_BUFFERS:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            node_id node = (void*)data.readIntPtr();
-            OMX_U32 port_index = data.readInt32();
-            OMX_BOOL enable = (OMX_BOOL)data.readInt32();
-
-            status_t err = storeMetaDataInBuffers(node, port_index, enable);
-            reply->writeInt32(err);
-
-            return NO_ERROR;
-        }
-
-        case ALLOC_BUFFER:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            node_id node = (void*)data.readIntPtr();
-            OMX_U32 port_index = data.readInt32();
-            size_t size = data.readInt32();
-
-            buffer_id buffer;
-            void *buffer_data;
-            status_t err = allocateBuffer(
-                    node, port_index, size, &buffer, &buffer_data);
-            reply->writeInt32(err);
-
-            if (err == OK) {
-                reply->writeIntPtr((intptr_t)buffer);
-                reply->writeIntPtr((intptr_t)buffer_data);
-            }
-
-            return NO_ERROR;
-        }
-
-        case ALLOC_BUFFER_WITH_BACKUP:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            node_id node = (void*)data.readIntPtr();
-            OMX_U32 port_index = data.readInt32();
-            sp<IMemory> params =
-                interface_cast<IMemory>(data.readStrongBinder());
-
-            buffer_id buffer;
-            status_t err = allocateBufferWithBackup(
-                    node, port_index, params, &buffer);
-
-            reply->writeInt32(err);
-
-            if (err == OK) {
-                reply->writeIntPtr((intptr_t)buffer);
-            }
-
-            return NO_ERROR;
-        }
-
-        case FREE_BUFFER:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            node_id node = (void*)data.readIntPtr();
-            OMX_U32 port_index = data.readInt32();
-            buffer_id buffer = (void*)data.readIntPtr();
-            reply->writeInt32(freeBuffer(node, port_index, buffer));
-
-            return NO_ERROR;
-        }
-
-        case FILL_BUFFER:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            node_id node = (void*)data.readIntPtr();
-            buffer_id buffer = (void*)data.readIntPtr();
-            reply->writeInt32(fillBuffer(node, buffer));
-
-            return NO_ERROR;
-        }
-
-        case EMPTY_BUFFER:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            node_id node = (void*)data.readIntPtr();
-            buffer_id buffer = (void*)data.readIntPtr();
-            OMX_U32 range_offset = data.readInt32();
-            OMX_U32 range_length = data.readInt32();
-            OMX_U32 flags = data.readInt32();
-            OMX_TICKS timestamp = data.readInt64();
-
-            reply->writeInt32(
-                    emptyBuffer(
-                        node, buffer, range_offset, range_length,
-                        flags, timestamp));
-
-            return NO_ERROR;
-        }
-
-        case GET_EXTENSION_INDEX:
-        {
-            CHECK_INTERFACE(IOMX, data, reply);
-
-            node_id node = (void*)data.readIntPtr();
-            const char *parameter_name = data.readCString();
-
-            OMX_INDEXTYPE index;
-            status_t err = getExtensionIndex(node, parameter_name, &index);
-
-            reply->writeInt32(err);
-
-            if (err == OK) {
-                reply->writeInt32(index);
-            }
-
-            return OK;
-        }
-
-        default:
-            return BBinder::onTransact(code, data, reply, flags);
-    }
+		default:
+			return BBinder::onTransact(code, data, reply, flags);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class BpOMXObserver : public BpInterface<IOMXObserver> {
+class BpOMXObserver : public BpInterface<IOMXObserver>
+{
 public:
-    BpOMXObserver(const sp<IBinder> &impl)
-        : BpInterface<IOMXObserver>(impl) {
-    }
+	BpOMXObserver(const sp<IBinder> &impl) : BpInterface<IOMXObserver>(impl) 
+	{
+	}
 
-    virtual void onMessage(const omx_message &msg) {
-        Parcel data, reply;
-        data.writeInterfaceToken(IOMXObserver::getInterfaceDescriptor());
-        data.write(&msg, sizeof(msg));
+	virtual void onMessage(const omx_message &msg)
+	{
+		Parcel data, reply;
+		data.writeInterfaceToken(IOMXObserver::getInterfaceDescriptor());
+		data.write(&msg, sizeof(msg));
 
-        remote()->transact(OBSERVER_ON_MSG, data, &reply, IBinder::FLAG_ONEWAY);
-    }
+		remote()->transact(OBSERVER_ON_MSG, data, &reply, IBinder::FLAG_ONEWAY);
+	}
 };
 
 IMPLEMENT_META_INTERFACE(OMXObserver, "android.hardware.IOMXObserver");
 
-status_t BnOMXObserver::onTransact(
-    uint32_t code, const Parcel &data, Parcel *reply, uint32_t flags) {
-    switch (code) {
-        case OBSERVER_ON_MSG:
-        {
-            CHECK_INTERFACE(IOMXObserver, data, reply);
+status_t BnOMXObserver::onTransact(uint32_t code, const Parcel &data, Parcel *reply, uint32_t flags) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、由于OMXCodecObserver 是继承BnOMXObserver 类的，所以此处的方法onMessage 应该调用的是子类的方法，如OMXCodecObserver::onMessage
+*/
+	switch (code) 
+	{
+		case OBSERVER_ON_MSG:
+			{
+				CHECK_INTERFACE(IOMXObserver, data, reply);
 
-            omx_message msg;
-            data.read(&msg, sizeof(msg));
+				omx_message msg;
+				data.read(&msg, sizeof(msg));
 
-            // XXX Could use readInplace maybe?
-            onMessage(msg);
+				// XXX Could use readInplace maybe?
+				onMessage(msg);
 
-            return NO_ERROR;
-        }
+				return NO_ERROR;
+			}
 
-        default:
-            return BBinder::onTransact(code, data, reply, flags);
-    }
+		default:
+			return BBinder::onTransact(code, data, reply, flags);
+	}
 }
 
 }  // namespace android

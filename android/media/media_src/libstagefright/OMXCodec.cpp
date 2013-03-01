@@ -191,7 +191,7 @@ static const CodecInfo kEncoderInfo[] =
 #define CODEC_LOGV(x, ...) ALOGV("[%s] "x, mComponentName, ##__VA_ARGS__)
 #define CODEC_LOGE(x, ...) ALOGE("[%s] "x, mComponentName, ##__VA_ARGS__)
 
-struct OMXCodecObserver : public BnOMXObserver 
+struct OMXCodecObserver : public BnOMXObserver /* 注意此处的基类啊。。。*/
 {
 	OMXCodecObserver() 
 	{
@@ -278,13 +278,13 @@ static bool IsSoftwareCodec(const char *componentName)
 {
 /*
 	参数:
-		1、
+		1、传入一个组件名字
 		
 	返回:
 		1、
 		
 	说明:
-		1、
+		1、根据组件名判断是否为软解码，组件名字以OMX.google.  开头为软解码，以OMX.  开头为非软解
 */
 	if (!strncmp("OMX.google.", componentName, 11)) 
 	{
@@ -311,7 +311,7 @@ static int CompareSoftwareCodecsFirst(const String8 *elem1, const String8 *elem2
 		1、
 		
 	说明:
-		1、
+		1、此函数是为多个软解码codec  进行排序使用的????????????????
 */
 	bool isOMX1 = !strncmp(elem1->string(), "OMX.", 4);
 	bool isOMX2 = !strncmp(elem2->string(), "OMX.", 4);
@@ -352,13 +352,14 @@ uint32_t OMXCodec::getComponentQuirks( const char *componentName, bool isEncoder
 {
 /*
 	参数:
-		1、
+		1、componentName	: 传入一个组件名
+		2、isEncoder 		: 是否为编码
 		
 	返回:
 		1、
 		
 	说明:
-		1、
+		1、根据组件名字返回组件具有的属性
 */
 	uint32_t quirks = 0;
 
@@ -460,7 +461,7 @@ uint32_t OMXCodec::getComponentQuirks( const char *componentName, bool isEncoder
 }
 
 // static
-void OMXCodec::findMatchingCodecs( const char *mime,
+void OMXCodec::findMatchingCodecs( 	const char *mime,
 										bool createEncoder,
 										const char *matchComponentName,
 										uint32_t flags,
@@ -468,7 +469,11 @@ void OMXCodec::findMatchingCodecs( const char *mime,
 {
 /*
 	参数:
-		1、
+		1、mime				: 传入一个字符串，相当于流里面描述自身格式的一个字符串
+		2、createEncoder			: 是否创建一个编码器
+		3、matchComponentName	: 传入一个组件名字
+		4、flags				: 传入一个数字标记( 标记软解、硬解等信息)
+		5、matchingCodecs		: 用于返回所以匹配的解码器的名字字符串???????
 		
 	返回:
 		1、
@@ -510,23 +515,24 @@ void OMXCodec::findMatchingCodecs( const char *mime,
 		// When requesting hardware-only codecs, only push hardware codecs
 		// When there is request neither for software-only nor for
 		// hardware-only codecs, push all codecs
-		if (((flags & kSoftwareCodecsOnly) &&   IsSoftwareCodec(componentName)) ||
-									((flags & kHardwareCodecsOnly) &&  !IsSoftwareCodec(componentName)) ||
-									(!(flags & (kSoftwareCodecsOnly | kHardwareCodecsOnly)))) 
+		if (((flags & kSoftwareCodecsOnly) &&   IsSoftwareCodec(componentName)) ||			/* 软解码*/
+				((flags & kHardwareCodecsOnly) &&  !IsSoftwareCodec(componentName)) ||		/* 硬解码*/
+				(!(flags & (kSoftwareCodecsOnly | kHardwareCodecsOnly)))) 
 		{
-			matchingCodecs->push(String8(componentName));
+			matchingCodecs->push(String8(componentName)); /* 将符合条件的压入到匹配解码的串中返回*/
 		}
 	}
 
 	if (flags & kPreferSoftwareCodecs) 
 	{
-		matchingCodecs->sort(CompareSoftwareCodecsFirst);
+		matchingCodecs->sort(CompareSoftwareCodecsFirst); /* 排序*/
 	}
 }
 
 // static
-sp<MediaSource> OMXCodec::Create(const sp<IOMX> &omx,
-									const sp<MetaData> &meta, bool createEncoder,
+sp<MediaSource> OMXCodec::Create(	const sp<IOMX> &omx,
+									const sp<MetaData> &meta, 
+									bool createEncoder,
 									const sp<MediaSource> &source,
 									const char *matchComponentName,
 									uint32_t flags,
@@ -543,7 +549,7 @@ sp<MediaSource> OMXCodec::Create(const sp<IOMX> &omx,
 		1、
 */
 	int32_t requiresSecureBuffers;
-	if (source->getFormat()->findInt32(kKeyRequiresSecureBuffers,&requiresSecureBuffers)&& requiresSecureBuffers) 
+	if (source->getFormat()->findInt32(kKeyRequiresSecureBuffers,&requiresSecureBuffers) && requiresSecureBuffers) 
 	{
 		flags |= kIgnoreCodecSpecificData;
 		flags |= kUseSecureInputBuffers;
@@ -555,7 +561,7 @@ sp<MediaSource> OMXCodec::Create(const sp<IOMX> &omx,
 
 	Vector<String8> matchingCodecs;
 	
-	findMatchingCodecs(mime, createEncoder, matchComponentName, flags, &matchingCodecs);
+	findMatchingCodecs(mime, createEncoder, matchComponentName, flags, &matchingCodecs); /* 查找匹配的codeec */
 
 	if (matchingCodecs.isEmpty()) 
 	{

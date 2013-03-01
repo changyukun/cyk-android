@@ -31,499 +31,765 @@
 
 namespace android {
 
-AudioPlayer::AudioPlayer(
-        const sp<MediaPlayerBase::AudioSink> &audioSink,
-        AwesomePlayer *observer)
-    : mAudioTrack(NULL),
-      mInputBuffer(NULL),
-      mSampleRate(0),
-      mLatencyUs(0),
-      mFrameSize(0),
-      mNumFramesPlayed(0),
-      mPositionTimeMediaUs(-1),
-      mPositionTimeRealUs(-1),
-      mSeeking(false),
-      mReachedEOS(false),
-      mFinalStatus(OK),
-      mStarted(false),
-      mIsFirstBuffer(false),
-      mFirstBufferResult(OK),
-      mFirstBuffer(NULL),
-      mAudioSink(audioSink),
-      mObserver(observer) {
+AudioPlayer::AudioPlayer(const sp<MediaPlayerBase::AudioSink> &audioSink, AwesomePlayer *observer)
+																								: mAudioTrack(NULL),
+																								mInputBuffer(NULL),
+																								mSampleRate(0),
+																								mLatencyUs(0),
+																								mFrameSize(0),
+																								mNumFramesPlayed(0),
+																								mPositionTimeMediaUs(-1),
+																								mPositionTimeRealUs(-1),
+																								mSeeking(false),
+																								mReachedEOS(false),
+																								mFinalStatus(OK),
+																								mStarted(false),
+																								mIsFirstBuffer(false),
+																								mFirstBufferResult(OK),
+																								mFirstBuffer(NULL),
+																								mAudioSink(audioSink),
+																								mObserver(observer) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
 }
 
-AudioPlayer::~AudioPlayer() {
-    if (mStarted) {
-        reset();
-    }
+AudioPlayer::~AudioPlayer() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mStarted) 
+	{
+		reset();
+	}
 }
 
-void AudioPlayer::setSource(const sp<MediaSource> &source) {
-    CHECK(mSource == NULL);
-    mSource = source;
+void AudioPlayer::setSource(const sp<MediaSource> &source)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	CHECK(mSource == NULL);
+	mSource = source;
 }
 
-status_t AudioPlayer::start(bool sourceAlreadyStarted) {
-    CHECK(!mStarted);
-    CHECK(mSource != NULL);
+status_t AudioPlayer::start(bool sourceAlreadyStarted) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	CHECK(!mStarted);
+	CHECK(mSource != NULL);
 
-    status_t err;
-    if (!sourceAlreadyStarted) {
-        err = mSource->start();
+	status_t err;
+	if (!sourceAlreadyStarted) 
+	{
+		err = mSource->start();
 
-        if (err != OK) {
-            return err;
-        }
-    }
+		if (err != OK) 
+		{
+			return err;
+		}
+	}
 
-    // We allow an optional INFO_FORMAT_CHANGED at the very beginning
-    // of playback, if there is one, getFormat below will retrieve the
-    // updated format, if there isn't, we'll stash away the valid buffer
-    // of data to be used on the first audio callback.
+	// We allow an optional INFO_FORMAT_CHANGED at the very beginning
+	// of playback, if there is one, getFormat below will retrieve the
+	// updated format, if there isn't, we'll stash away the valid buffer
+	// of data to be used on the first audio callback.
 
-    CHECK(mFirstBuffer == NULL);
+	CHECK(mFirstBuffer == NULL);
 
-    MediaSource::ReadOptions options;
-    if (mSeeking) {
-        options.setSeekTo(mSeekTimeUs);
-        mSeeking = false;
-    }
+	MediaSource::ReadOptions options;
+	if (mSeeking) 
+	{
+		options.setSeekTo(mSeekTimeUs);
+		mSeeking = false;
+	}
 
-    mFirstBufferResult = mSource->read(&mFirstBuffer, &options);
-    if (mFirstBufferResult == INFO_FORMAT_CHANGED) {
-        ALOGV("INFO_FORMAT_CHANGED!!!");
+	mFirstBufferResult = mSource->read(&mFirstBuffer, &options);
+	if (mFirstBufferResult == INFO_FORMAT_CHANGED)
+	{
+		ALOGV("INFO_FORMAT_CHANGED!!!");
 
-        CHECK(mFirstBuffer == NULL);
-        mFirstBufferResult = OK;
-        mIsFirstBuffer = false;
-    } else {
-        mIsFirstBuffer = true;
-    }
+		CHECK(mFirstBuffer == NULL);
+		mFirstBufferResult = OK;
+		mIsFirstBuffer = false;
+	} 
+	else
+	{
+		mIsFirstBuffer = true;
+	}
 
-    sp<MetaData> format = mSource->getFormat();
-    const char *mime;
-    bool success = format->findCString(kKeyMIMEType, &mime);
-    CHECK(success);
-    CHECK(!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_RAW));
+	sp<MetaData> format = mSource->getFormat();
+	const char *mime;
+	bool success = format->findCString(kKeyMIMEType, &mime);
+	CHECK(success);
+	CHECK(!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_RAW));
 
-    success = format->findInt32(kKeySampleRate, &mSampleRate);
-    CHECK(success);
+	success = format->findInt32(kKeySampleRate, &mSampleRate);
+	CHECK(success);
 
-    int32_t numChannels;
-    success = format->findInt32(kKeyChannelCount, &numChannels);
-    CHECK(success);
+	int32_t numChannels;
+	success = format->findInt32(kKeyChannelCount, &numChannels);
+	CHECK(success);
 
-    if (mAudioSink.get() != NULL) {
-        status_t err = mAudioSink->open(
-                mSampleRate, numChannels, AUDIO_FORMAT_PCM_16_BIT,
-                DEFAULT_AUDIOSINK_BUFFERCOUNT,
-                &AudioPlayer::AudioSinkCallback, this);
-        if (err != OK) {
-            if (mFirstBuffer != NULL) {
-                mFirstBuffer->release();
-                mFirstBuffer = NULL;
-            }
+	if (mAudioSink.get() != NULL)
+	{
+		status_t err = mAudioSink->open(	mSampleRate, 
+										numChannels,
+										AUDIO_FORMAT_PCM_16_BIT,
+										DEFAULT_AUDIOSINK_BUFFERCOUNT,
+										&AudioPlayer::AudioSinkCallback,
+										this);
+		if (err != OK) 
+		{
+			if (mFirstBuffer != NULL) 
+			{
+				mFirstBuffer->release();
+				mFirstBuffer = NULL;
+			}
 
-            if (!sourceAlreadyStarted) {
-                mSource->stop();
-            }
+			if (!sourceAlreadyStarted) 
+			{
+				mSource->stop();
+			}
 
-            return err;
-        }
+			return err;
+		}
 
-        mLatencyUs = (int64_t)mAudioSink->latency() * 1000;
-        mFrameSize = mAudioSink->frameSize();
+		mLatencyUs = (int64_t)mAudioSink->latency() * 1000;
+		mFrameSize = mAudioSink->frameSize();
 
-        mAudioSink->start();
-    } else {
-        mAudioTrack = new AudioTrack(
-                AUDIO_STREAM_MUSIC, mSampleRate, AUDIO_FORMAT_PCM_16_BIT,
-                (numChannels == 2)
-                    ? AUDIO_CHANNEL_OUT_STEREO
-                    : AUDIO_CHANNEL_OUT_MONO,
-                0, 0, &AudioCallback, this, 0);
+		mAudioSink->start();
+	} 
+	else 
+	{
+		mAudioTrack = new AudioTrack(	AUDIO_STREAM_MUSIC, 
+									mSampleRate, 
+									AUDIO_FORMAT_PCM_16_BIT,
+									(numChannels == 2) ? AUDIO_CHANNEL_OUT_STEREO : AUDIO_CHANNEL_OUT_MONO,
+									0, 
+									0,
+									&AudioCallback, 
+									this, 
+									0);
 
-        if ((err = mAudioTrack->initCheck()) != OK) {
-            delete mAudioTrack;
-            mAudioTrack = NULL;
+		if ((err = mAudioTrack->initCheck()) != OK) 
+		{
+			delete mAudioTrack;
+			mAudioTrack = NULL;
 
-            if (mFirstBuffer != NULL) {
-                mFirstBuffer->release();
-                mFirstBuffer = NULL;
-            }
+			if (mFirstBuffer != NULL) 
+			{
+				mFirstBuffer->release();
+				mFirstBuffer = NULL;
+			}
 
-            if (!sourceAlreadyStarted) {
-                mSource->stop();
-            }
+			if (!sourceAlreadyStarted) 
+			{
+				mSource->stop();
+			}
 
-            return err;
-        }
+			return err;
+		}
 
-        mLatencyUs = (int64_t)mAudioTrack->latency() * 1000;
-        mFrameSize = mAudioTrack->frameSize();
+		mLatencyUs = (int64_t)mAudioTrack->latency() * 1000;
+		mFrameSize = mAudioTrack->frameSize();
 
-        mAudioTrack->start();
-    }
+		mAudioTrack->start();
+	}
 
-    mStarted = true;
+	mStarted = true;
 
-    return OK;
+	return OK;
 }
 
-void AudioPlayer::pause(bool playPendingSamples) {
-    CHECK(mStarted);
+void AudioPlayer::pause(bool playPendingSamples) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	CHECK(mStarted);
 
-    if (playPendingSamples) {
-        if (mAudioSink.get() != NULL) {
-            mAudioSink->stop();
-        } else {
-            mAudioTrack->stop();
-        }
+	if (playPendingSamples) 
+	{
+		if (mAudioSink.get() != NULL) 
+		{
+			mAudioSink->stop();
+		}
+		else
+		{
+			mAudioTrack->stop();
+		}
 
-        mNumFramesPlayed = 0;
-    } else {
-        if (mAudioSink.get() != NULL) {
-            mAudioSink->pause();
-        } else {
-            mAudioTrack->pause();
-        }
-    }
+		mNumFramesPlayed = 0;
+	} 
+	else 
+	{
+		if (mAudioSink.get() != NULL) 
+		{
+			mAudioSink->pause();
+		} 
+		else
+		{
+			mAudioTrack->pause();
+		}
+	}
 }
 
-void AudioPlayer::resume() {
-    CHECK(mStarted);
+void AudioPlayer::resume() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	CHECK(mStarted);
 
-    if (mAudioSink.get() != NULL) {
-        mAudioSink->start();
-    } else {
-        mAudioTrack->start();
-    }
+	if (mAudioSink.get() != NULL) 
+	{
+		mAudioSink->start();
+	}
+	else
+	{
+		mAudioTrack->start();
+	}
 }
 
-void AudioPlayer::reset() {
-    CHECK(mStarted);
+void AudioPlayer::reset()
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	CHECK(mStarted);
 
-    if (mAudioSink.get() != NULL) {
-        mAudioSink->stop();
-        mAudioSink->close();
-    } else {
-        mAudioTrack->stop();
+	if (mAudioSink.get() != NULL)
+	{
+		mAudioSink->stop();
+		mAudioSink->close();
+	} 
+	else 
+	{
+		mAudioTrack->stop();
 
-        delete mAudioTrack;
-        mAudioTrack = NULL;
-    }
+		delete mAudioTrack;
+		mAudioTrack = NULL;
+	}
 
-    // Make sure to release any buffer we hold onto so that the
-    // source is able to stop().
+	// Make sure to release any buffer we hold onto so that the
+	// source is able to stop().
 
-    if (mFirstBuffer != NULL) {
-        mFirstBuffer->release();
-        mFirstBuffer = NULL;
-    }
+	if (mFirstBuffer != NULL) 
+	{
+		mFirstBuffer->release();
+		mFirstBuffer = NULL;
+	}
 
-    if (mInputBuffer != NULL) {
-        ALOGV("AudioPlayer releasing input buffer.");
+	if (mInputBuffer != NULL)
+		{
+		ALOGV("AudioPlayer releasing input buffer.");
 
-        mInputBuffer->release();
-        mInputBuffer = NULL;
-    }
+		mInputBuffer->release();
+		mInputBuffer = NULL;
+	}
 
-    mSource->stop();
+	mSource->stop();
 
-    // The following hack is necessary to ensure that the OMX
-    // component is completely released by the time we may try
-    // to instantiate it again.
-    wp<MediaSource> tmp = mSource;
-    mSource.clear();
-    while (tmp.promote() != NULL) {
-        usleep(1000);
-    }
-    IPCThreadState::self()->flushCommands();
+	// The following hack is necessary to ensure that the OMX
+	// component is completely released by the time we may try
+	// to instantiate it again.
+	wp<MediaSource> tmp = mSource;
+	mSource.clear();
+	while (tmp.promote() != NULL) 
+	{
+		usleep(1000);
+	}
+	IPCThreadState::self()->flushCommands();
 
-    mNumFramesPlayed = 0;
-    mPositionTimeMediaUs = -1;
-    mPositionTimeRealUs = -1;
-    mSeeking = false;
-    mReachedEOS = false;
-    mFinalStatus = OK;
-    mStarted = false;
+	mNumFramesPlayed = 0;
+	mPositionTimeMediaUs = -1;
+	mPositionTimeRealUs = -1;
+	mSeeking = false;
+	mReachedEOS = false;
+	mFinalStatus = OK;
+	mStarted = false;
 }
 
 // static
-void AudioPlayer::AudioCallback(int event, void *user, void *info) {
-    static_cast<AudioPlayer *>(user)->AudioCallback(event, info);
+void AudioPlayer::AudioCallback(int event, void *user, void *info) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	static_cast<AudioPlayer *>(user)->AudioCallback(event, info);
 }
 
-bool AudioPlayer::isSeeking() {
-    Mutex::Autolock autoLock(mLock);
-    return mSeeking;
+bool AudioPlayer::isSeeking()
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
+	return mSeeking;
 }
 
-bool AudioPlayer::reachedEOS(status_t *finalStatus) {
-    *finalStatus = OK;
+bool AudioPlayer::reachedEOS(status_t *finalStatus) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	*finalStatus = OK;
 
-    Mutex::Autolock autoLock(mLock);
-    *finalStatus = mFinalStatus;
-    return mReachedEOS;
+	Mutex::Autolock autoLock(mLock);
+	*finalStatus = mFinalStatus;
+	return mReachedEOS;
 }
 
 // static
-size_t AudioPlayer::AudioSinkCallback(
-        MediaPlayerBase::AudioSink *audioSink,
-        void *buffer, size_t size, void *cookie) {
-    AudioPlayer *me = (AudioPlayer *)cookie;
+size_t AudioPlayer::AudioSinkCallback(MediaPlayerBase::AudioSink *audioSink, void *buffer, size_t size, void *cookie) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	AudioPlayer *me = (AudioPlayer *)cookie;
 
-    return me->fillBuffer(buffer, size);
+	return me->fillBuffer(buffer, size);
 }
 
-void AudioPlayer::AudioCallback(int event, void *info) {
-    if (event != AudioTrack::EVENT_MORE_DATA) {
-        return;
-    }
+void AudioPlayer::AudioCallback(int event, void *info)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (event != AudioTrack::EVENT_MORE_DATA)
+	{
+		return;
+	}
 
-    AudioTrack::Buffer *buffer = (AudioTrack::Buffer *)info;
-    size_t numBytesWritten = fillBuffer(buffer->raw, buffer->size);
+	AudioTrack::Buffer *buffer = (AudioTrack::Buffer *)info;
+	size_t numBytesWritten = fillBuffer(buffer->raw, buffer->size);
 
-    buffer->size = numBytesWritten;
+	buffer->size = numBytesWritten;
 }
 
-uint32_t AudioPlayer::getNumFramesPendingPlayout() const {
-    uint32_t numFramesPlayedOut;
-    status_t err;
+uint32_t AudioPlayer::getNumFramesPendingPlayout() const 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	uint32_t numFramesPlayedOut;
+	status_t err;
 
-    if (mAudioSink != NULL) {
-        err = mAudioSink->getPosition(&numFramesPlayedOut);
-    } else {
-        err = mAudioTrack->getPosition(&numFramesPlayedOut);
-    }
+	if (mAudioSink != NULL)
+	{
+		err = mAudioSink->getPosition(&numFramesPlayedOut);
+	} 
+	else
+	{
+		err = mAudioTrack->getPosition(&numFramesPlayedOut);
+	}
 
-    if (err != OK || mNumFramesPlayed < numFramesPlayedOut) {
-        return 0;
-    }
+	if (err != OK || mNumFramesPlayed < numFramesPlayedOut) 
+	{
+		return 0;
+	}
 
-    // mNumFramesPlayed is the number of frames submitted
-    // to the audio sink for playback, but not all of them
-    // may have played out by now.
-    return mNumFramesPlayed - numFramesPlayedOut;
+	// mNumFramesPlayed is the number of frames submitted
+	// to the audio sink for playback, but not all of them
+	// may have played out by now.
+	return mNumFramesPlayed - numFramesPlayedOut;
 }
 
-size_t AudioPlayer::fillBuffer(void *data, size_t size) {
-    if (mNumFramesPlayed == 0) {
-        ALOGV("AudioCallback");
-    }
+size_t AudioPlayer::fillBuffer(void *data, size_t size) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	if (mNumFramesPlayed == 0) 
+	{
+		ALOGV("AudioCallback");
+	}
 
-    if (mReachedEOS) {
-        return 0;
-    }
+	if (mReachedEOS) 
+	{
+		return 0;
+	}
 
-    bool postSeekComplete = false;
-    bool postEOS = false;
-    int64_t postEOSDelayUs = 0;
+	bool postSeekComplete = false;
+	bool postEOS = false;
+	int64_t postEOSDelayUs = 0;
 
-    size_t size_done = 0;
-    size_t size_remaining = size;
-    while (size_remaining > 0) {
-        MediaSource::ReadOptions options;
+	size_t size_done = 0;
+	size_t size_remaining = size;
+	while (size_remaining > 0) 
+	{
+		MediaSource::ReadOptions options;
 
-        {
-            Mutex::Autolock autoLock(mLock);
+		{
+			Mutex::Autolock autoLock(mLock);
 
-            if (mSeeking) {
-                if (mIsFirstBuffer) {
-                    if (mFirstBuffer != NULL) {
-                        mFirstBuffer->release();
-                        mFirstBuffer = NULL;
-                    }
-                    mIsFirstBuffer = false;
-                }
+			if (mSeeking)
+			{
+				if (mIsFirstBuffer) 
+				{
+					if (mFirstBuffer != NULL) 
+					{
+						mFirstBuffer->release();
+						mFirstBuffer = NULL;
+					}
+					mIsFirstBuffer = false;
+				}
 
-                options.setSeekTo(mSeekTimeUs);
+				options.setSeekTo(mSeekTimeUs);
 
-                if (mInputBuffer != NULL) {
-                    mInputBuffer->release();
-                    mInputBuffer = NULL;
-                }
+				if (mInputBuffer != NULL) 
+				{
+					mInputBuffer->release();
+					mInputBuffer = NULL;
+				}
 
-                mSeeking = false;
-                if (mObserver) {
-                    postSeekComplete = true;
-                }
-            }
-        }
+				mSeeking = false;
+				if (mObserver) 
+				{
+					postSeekComplete = true;
+				}
+			}
+		}
 
-        if (mInputBuffer == NULL) {
-            status_t err;
+		if (mInputBuffer == NULL) 
+		{
+			status_t err;
 
-            if (mIsFirstBuffer) {
-                mInputBuffer = mFirstBuffer;
-                mFirstBuffer = NULL;
-                err = mFirstBufferResult;
+			if (mIsFirstBuffer)
+			{
+				mInputBuffer = mFirstBuffer;
+				mFirstBuffer = NULL;
+				err = mFirstBufferResult;
 
-                mIsFirstBuffer = false;
-            } else {
-                err = mSource->read(&mInputBuffer, &options);
-            }
+				mIsFirstBuffer = false;
+			}
+			else
+			{
+				err = mSource->read(&mInputBuffer, &options);
+			}
 
-            CHECK((err == OK && mInputBuffer != NULL)
-                   || (err != OK && mInputBuffer == NULL));
+			CHECK((err == OK && mInputBuffer != NULL) || (err != OK && mInputBuffer == NULL));
 
-            Mutex::Autolock autoLock(mLock);
+			Mutex::Autolock autoLock(mLock);
 
-            if (err != OK) {
-                if (mObserver && !mReachedEOS) {
-                    // We don't want to post EOS right away but only
-                    // after all frames have actually been played out.
+			if (err != OK)
+			{
+				if (mObserver && !mReachedEOS)
+				{
+					// We don't want to post EOS right away but only
+					// after all frames have actually been played out.
 
-                    // These are the number of frames submitted to the
-                    // AudioTrack that you haven't heard yet.
-                    uint32_t numFramesPendingPlayout =
-                        getNumFramesPendingPlayout();
+					// These are the number of frames submitted to the
+					// AudioTrack that you haven't heard yet.
+					uint32_t numFramesPendingPlayout =  getNumFramesPendingPlayout();
 
-                    // These are the number of frames we're going to
-                    // submit to the AudioTrack by returning from this
-                    // callback.
-                    uint32_t numAdditionalFrames = size_done / mFrameSize;
+					// These are the number of frames we're going to
+					// submit to the AudioTrack by returning from this
+					// callback.
+					uint32_t numAdditionalFrames = size_done / mFrameSize;
 
-                    numFramesPendingPlayout += numAdditionalFrames;
+					numFramesPendingPlayout += numAdditionalFrames;
 
-                    int64_t timeToCompletionUs =
-                        (1000000ll * numFramesPendingPlayout) / mSampleRate;
+					int64_t timeToCompletionUs = (1000000ll * numFramesPendingPlayout) / mSampleRate;
 
-                    ALOGV("total number of frames played: %lld (%lld us)",
-                            (mNumFramesPlayed + numAdditionalFrames),
-                            1000000ll * (mNumFramesPlayed + numAdditionalFrames)
-                                / mSampleRate);
+					ALOGV("total number of frames played: %lld (%lld us)",
+																(mNumFramesPlayed + numAdditionalFrames),
+																1000000ll * (mNumFramesPlayed + numAdditionalFrames)
+																/ mSampleRate);
 
-                    ALOGV("%d frames left to play, %lld us (%.2f secs)",
-                         numFramesPendingPlayout,
-                         timeToCompletionUs, timeToCompletionUs / 1E6);
+					ALOGV("%d frames left to play, %lld us (%.2f secs)",
+																numFramesPendingPlayout,
+																timeToCompletionUs, timeToCompletionUs / 1E6);
 
-                    postEOS = true;
-                    postEOSDelayUs = timeToCompletionUs + mLatencyUs;
-                }
+					postEOS = true;
+					postEOSDelayUs = timeToCompletionUs + mLatencyUs;
+				}
 
-                mReachedEOS = true;
-                mFinalStatus = err;
-                break;
-            }
+				mReachedEOS = true;
+				mFinalStatus = err;
+				break;
+			}
 
-            if (mAudioSink != NULL) {
-                mLatencyUs = (int64_t)mAudioSink->latency() * 1000;
-            } else {
-                mLatencyUs = (int64_t)mAudioTrack->latency() * 1000;
-            }
+			if (mAudioSink != NULL) 
+			{
+				mLatencyUs = (int64_t)mAudioSink->latency() * 1000;
+			} 
+			else 
+			{
+				mLatencyUs = (int64_t)mAudioTrack->latency() * 1000;
+			}
 
-            CHECK(mInputBuffer->meta_data()->findInt64(
-                        kKeyTime, &mPositionTimeMediaUs));
+			CHECK(mInputBuffer->meta_data()->findInt64( kKeyTime, &mPositionTimeMediaUs));
 
-            mPositionTimeRealUs =
-                ((mNumFramesPlayed + size_done / mFrameSize) * 1000000)
-                    / mSampleRate;
+			mPositionTimeRealUs = ((mNumFramesPlayed + size_done / mFrameSize) * 1000000)  / mSampleRate;
 
-            ALOGV("buffer->size() = %d, "
-                 "mPositionTimeMediaUs=%.2f mPositionTimeRealUs=%.2f",
-                 mInputBuffer->range_length(),
-                 mPositionTimeMediaUs / 1E6, mPositionTimeRealUs / 1E6);
-        }
+			ALOGV("buffer->size() = %d, "
+										"mPositionTimeMediaUs=%.2f mPositionTimeRealUs=%.2f",
+										mInputBuffer->range_length(),
+										mPositionTimeMediaUs / 1E6, mPositionTimeRealUs / 1E6);
+		}
 
-        if (mInputBuffer->range_length() == 0) {
-            mInputBuffer->release();
-            mInputBuffer = NULL;
+		if (mInputBuffer->range_length() == 0) 
+		{
+			mInputBuffer->release();
+			mInputBuffer = NULL;
 
-            continue;
-        }
+			continue;
+		}
 
-        size_t copy = size_remaining;
-        if (copy > mInputBuffer->range_length()) {
-            copy = mInputBuffer->range_length();
-        }
+		size_t copy = size_remaining;
+		if (copy > mInputBuffer->range_length()) 
+		{
+			copy = mInputBuffer->range_length();
+		}
 
-        memcpy((char *)data + size_done,
-               (const char *)mInputBuffer->data() + mInputBuffer->range_offset(),
-               copy);
+		memcpy((char *)data + size_done, (const char *)mInputBuffer->data() + mInputBuffer->range_offset(), copy);
 
-        mInputBuffer->set_range(mInputBuffer->range_offset() + copy,
-                                mInputBuffer->range_length() - copy);
+		mInputBuffer->set_range(mInputBuffer->range_offset() + copy, mInputBuffer->range_length() - copy);
 
-        size_done += copy;
-        size_remaining -= copy;
-    }
+		size_done += copy;
+		size_remaining -= copy;
+	}
 
-    {
-        Mutex::Autolock autoLock(mLock);
-        mNumFramesPlayed += size_done / mFrameSize;
-    }
+	{
+		Mutex::Autolock autoLock(mLock);
+		mNumFramesPlayed += size_done / mFrameSize;
+	}
 
-    if (postEOS) {
-        mObserver->postAudioEOS(postEOSDelayUs);
-    }
+	if (postEOS) 
+	{
+		mObserver->postAudioEOS(postEOSDelayUs);
+	}
 
-    if (postSeekComplete) {
-        mObserver->postAudioSeekComplete();
-    }
+	if (postSeekComplete) 
+	{
+		mObserver->postAudioSeekComplete();
+	}
 
-    return size_done;
+	return size_done;
 }
 
-int64_t AudioPlayer::getRealTimeUs() {
-    Mutex::Autolock autoLock(mLock);
-    return getRealTimeUsLocked();
+int64_t AudioPlayer::getRealTimeUs()
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
+	return getRealTimeUsLocked();
 }
 
-int64_t AudioPlayer::getRealTimeUsLocked() const {
-    CHECK(mStarted);
-    CHECK_NE(mSampleRate, 0);
-    return -mLatencyUs + (mNumFramesPlayed * 1000000) / mSampleRate;
+int64_t AudioPlayer::getRealTimeUsLocked() const 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	CHECK(mStarted);
+	CHECK_NE(mSampleRate, 0);
+	return -mLatencyUs + (mNumFramesPlayed * 1000000) / mSampleRate;
 }
 
-int64_t AudioPlayer::getMediaTimeUs() {
-    Mutex::Autolock autoLock(mLock);
+int64_t AudioPlayer::getMediaTimeUs() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    if (mPositionTimeMediaUs < 0 || mPositionTimeRealUs < 0) {
-        if (mSeeking) {
-            return mSeekTimeUs;
-        }
+	if (mPositionTimeMediaUs < 0 || mPositionTimeRealUs < 0) 
+	{
+		if (mSeeking) 
+		{
+			return mSeekTimeUs;
+		}
 
-        return 0;
-    }
+		return 0;
+	}
 
-    int64_t realTimeOffset = getRealTimeUsLocked() - mPositionTimeRealUs;
-    if (realTimeOffset < 0) {
-        realTimeOffset = 0;
-    }
+	int64_t realTimeOffset = getRealTimeUsLocked() - mPositionTimeRealUs;
+	if (realTimeOffset < 0)
+	{
+		realTimeOffset = 0;
+	}
 
-    return mPositionTimeMediaUs + realTimeOffset;
+	return mPositionTimeMediaUs + realTimeOffset;
 }
 
-bool AudioPlayer::getMediaTimeMapping(
-        int64_t *realtime_us, int64_t *mediatime_us) {
-    Mutex::Autolock autoLock(mLock);
+bool AudioPlayer::getMediaTimeMapping(int64_t *realtime_us, int64_t *mediatime_us) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    *realtime_us = mPositionTimeRealUs;
-    *mediatime_us = mPositionTimeMediaUs;
+	*realtime_us = mPositionTimeRealUs;
+	*mediatime_us = mPositionTimeMediaUs;
 
-    return mPositionTimeRealUs != -1 && mPositionTimeMediaUs != -1;
+	return mPositionTimeRealUs != -1 && mPositionTimeMediaUs != -1;
 }
 
-status_t AudioPlayer::seekTo(int64_t time_us) {
-    Mutex::Autolock autoLock(mLock);
+status_t AudioPlayer::seekTo(int64_t time_us) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    mSeeking = true;
-    mPositionTimeRealUs = mPositionTimeMediaUs = -1;
-    mReachedEOS = false;
-    mSeekTimeUs = time_us;
+	mSeeking = true;
+	mPositionTimeRealUs = mPositionTimeMediaUs = -1;
+	mReachedEOS = false;
+	mSeekTimeUs = time_us;
 
-    // Flush resets the number of played frames
-    mNumFramesPlayed = 0;
+	// Flush resets the number of played frames
+	mNumFramesPlayed = 0;
 
-    if (mAudioSink != NULL) {
-        mAudioSink->flush();
-    } else {
-        mAudioTrack->flush();
-    }
+	if (mAudioSink != NULL) 
+	{
+		mAudioSink->flush();
+	}
+	else
+	{
+		mAudioTrack->flush();
+	}
 
-    return OK;
+	return OK;
 }
 
 }

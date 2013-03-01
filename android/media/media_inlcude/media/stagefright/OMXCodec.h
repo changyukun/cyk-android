@@ -125,7 +125,7 @@ private:
         SHUTTING_DOWN,
     };
 
-    enum Quirks {
+    enum Quirks { /* ¼ûº¯ÊýgetComponentQuirks */
         kNeedsFlushBeforeDisable              = 1,
         kWantsNALFragments                    = 2,
         kRequiresLoadedToIdleAfterAllocation  = 4,
