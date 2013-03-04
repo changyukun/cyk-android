@@ -159,7 +159,7 @@ void DataSource::RegisterDefaultSniffers()
 		1、
 		
 	说明:
-		1、
+		1、注册了一些了媒体的MIME类型的探测函数，这些探测用于判断媒体的MIME类型, 进而决定要创建什么样的MediaExtractor
 */
 	RegisterSniffer(SniffMPEG4);
 	RegisterSniffer(SniffMatroska);

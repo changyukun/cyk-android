@@ -25,23 +25,56 @@
 
 namespace android {
 
-OMXClient::OMXClient() {
+OMXClient::OMXClient() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
 }
 
-status_t OMXClient::connect() {
-    sp<IServiceManager> sm = defaultServiceManager();
-    sp<IBinder> binder = sm->getService(String16("media.player"));
-    sp<IMediaPlayerService> service = interface_cast<IMediaPlayerService>(binder);
+status_t OMXClient::connect() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	sp<IServiceManager> sm = defaultServiceManager();
+	sp<IBinder> binder = sm->getService(String16("media.player"));
+	sp<IMediaPlayerService> service = interface_cast<IMediaPlayerService>(binder);
 
-    CHECK(service.get() != NULL);
+	CHECK(service.get() != NULL);
 
-    mOMX = service->getOMX();
-    CHECK(mOMX.get() != NULL);
+	mOMX = service->getOMX();
+	CHECK(mOMX.get() != NULL);
 
-    return OK;
+	return OK;
 }
 
-void OMXClient::disconnect() {
+void OMXClient::disconnect() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
 }
 
 }  // namespace android

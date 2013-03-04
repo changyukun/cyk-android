@@ -211,7 +211,7 @@ private:
 	status_t        attachNewPlayer(const sp<IMediaPlayer>& player);
 	status_t        reset_l();
 
-	sp<IMediaPlayer>            mPlayer;
+	sp<IMediaPlayer>            mPlayer; /* 此值为BpMediaPlayer  的实例，见方法MediaPlayer::setDataSource()  中的player 实例的生成，实质就是生成本地的BpMediaPlayer  */
 	thread_id_t                 mLockThreadId;
 	Mutex                       mLock;
 	Mutex                       mNotifyLock;

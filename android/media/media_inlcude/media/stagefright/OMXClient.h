@@ -22,22 +22,24 @@
 
 namespace android {
 
-class OMXClient {
+class OMXClient 
+{
 public:
-    OMXClient();
+	OMXClient();
 
-    status_t connect();
-    void disconnect();
+	status_t connect();
+	void disconnect();
 
-    sp<IOMX> interface() {
-        return mOMX;
-    }
+	sp<IOMX> interface() 
+	{
+		return mOMX;
+	}
 
 private:
-    sp<IOMX> mOMX;
+	sp<IOMX> mOMX;
 
-    OMXClient(const OMXClient &);
-    OMXClient &operator=(const OMXClient &);
+	OMXClient(const OMXClient &);
+	OMXClient &operator=(const OMXClient &);
 };
 
 }  // namespace android

@@ -678,9 +678,12 @@ void MediaPlayerService::removeClient(wp<Client> client)
 	mClients.remove(client);
 }
 
-MediaPlayerService::Client::Client(const sp<MediaPlayerService>& service, pid_t pid,
-								int32_t connId, const sp<IMediaPlayerClient>& client,
-								int audioSessionId, uid_t uid)
+MediaPlayerService::Client::Client(const sp<MediaPlayerService>& service, 
+								pid_t pid,
+								int32_t connId, 
+								const sp<IMediaPlayerClient>& client,
+								int audioSessionId, 
+								uid_t uid)
 {
 /*
 	²ÎÊý:

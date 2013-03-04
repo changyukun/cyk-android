@@ -28,175 +28,282 @@
 
 namespace android {
 
-OMXMaster::OMXMaster()
-    : mVendorLibHandle(NULL) {
-    addVendorPlugin();
-    addPlugin(new SoftOMXPlugin);
+OMXMaster::OMXMaster() : mVendorLibHandle(NULL) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	addVendorPlugin();
+	addPlugin(new SoftOMXPlugin);
 }
 
-OMXMaster::~OMXMaster() {
-    clearPlugins();
+OMXMaster::~OMXMaster() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	clearPlugins();
 
-    if (mVendorLibHandle != NULL) {
-        dlclose(mVendorLibHandle);
-        mVendorLibHandle = NULL;
-    }
+	if (mVendorLibHandle != NULL) 
+	{
+		dlclose(mVendorLibHandle);
+		mVendorLibHandle = NULL;
+	}
 }
 
-void OMXMaster::addVendorPlugin() {
-    addPlugin("libstagefrighthw.so");
+void OMXMaster::addVendorPlugin() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	addPlugin("libstagefrighthw.so");
 }
 
-void OMXMaster::addPlugin(const char *libname) {
-    mVendorLibHandle = dlopen(libname, RTLD_NOW);
+void OMXMaster::addPlugin(const char *libname) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	mVendorLibHandle = dlopen(libname, RTLD_NOW);
 
-    if (mVendorLibHandle == NULL) {
-        return;
-    }
+	if (mVendorLibHandle == NULL) 
+	{
+		return;
+	}
 
-    typedef OMXPluginBase *(*CreateOMXPluginFunc)();
-    CreateOMXPluginFunc createOMXPlugin =
-        (CreateOMXPluginFunc)dlsym(
-                mVendorLibHandle, "createOMXPlugin");
-    if (!createOMXPlugin)
-        createOMXPlugin = (CreateOMXPluginFunc)dlsym(
-                mVendorLibHandle, "_ZN7android15createOMXPluginEv");
+	typedef OMXPluginBase *(*CreateOMXPluginFunc)();
+	
+	CreateOMXPluginFunc createOMXPlugin =  (CreateOMXPluginFunc)dlsym(mVendorLibHandle, "createOMXPlugin");
+	
+	if (!createOMXPlugin)
+		createOMXPlugin = (CreateOMXPluginFunc)dlsym(mVendorLibHandle, "_ZN7android15createOMXPluginEv");
 
-    if (createOMXPlugin) {
-        addPlugin((*createOMXPlugin)());
-    }
+	if (createOMXPlugin) 
+	{
+		addPlugin((*createOMXPlugin)());
+	}
 }
 
-void OMXMaster::addPlugin(OMXPluginBase *plugin) {
-    Mutex::Autolock autoLock(mLock);
+void OMXMaster::addPlugin(OMXPluginBase *plugin) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    mPlugins.push_back(plugin);
+	mPlugins.push_back(plugin);
 
-    OMX_U32 index = 0;
+	OMX_U32 index = 0;
 
-    char name[128];
-    OMX_ERRORTYPE err;
-    while ((err = plugin->enumerateComponents(
-                    name, sizeof(name), index++)) == OMX_ErrorNone) {
-        String8 name8(name);
+	char name[128];
+	OMX_ERRORTYPE err;
+	while ((err = plugin->enumerateComponents(name, sizeof(name), index++)) == OMX_ErrorNone) 
+	{
+		String8 name8(name);
 
-        if (mPluginByComponentName.indexOfKey(name8) >= 0) {
-            ALOGE("A component of name '%s' already exists, ignoring this one.",
-                 name8.string());
+		if (mPluginByComponentName.indexOfKey(name8) >= 0) 
+		{
+			ALOGE("A component of name '%s' already exists, ignoring this one.",name8.string());
 
-            continue;
-        }
+			continue;
+		}
 
-        mPluginByComponentName.add(name8, plugin);
-    }
+		mPluginByComponentName.add(name8, plugin);
+	}
 
-    if (err != OMX_ErrorNoMore) {
-        ALOGE("OMX plugin failed w/ error 0x%08x after registering %d "
-             "components", err, mPluginByComponentName.size());
-    }
+	if (err != OMX_ErrorNoMore) 
+	{
+		ALOGE("OMX plugin failed w/ error 0x%08x after registering %d " "components", err, mPluginByComponentName.size());
+	}
 }
 
-void OMXMaster::clearPlugins() {
-    Mutex::Autolock autoLock(mLock);
+void OMXMaster::clearPlugins() 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    typedef void (*DestroyOMXPluginFunc)(OMXPluginBase*);
-    DestroyOMXPluginFunc destroyOMXPlugin =
-        (DestroyOMXPluginFunc)dlsym(
-                mVendorLibHandle, "destroyOMXPlugin");
+	typedef void (*DestroyOMXPluginFunc)(OMXPluginBase*);
+	DestroyOMXPluginFunc destroyOMXPlugin = (DestroyOMXPluginFunc)dlsym(mVendorLibHandle, "destroyOMXPlugin");
 
-    mPluginByComponentName.clear();
+	mPluginByComponentName.clear();
 
-    for (List<OMXPluginBase *>::iterator it = mPlugins.begin();
-            it != mPlugins.end(); ++it) {
-        if (destroyOMXPlugin)
-            destroyOMXPlugin(*it);
-        else
-            delete *it;
-        *it = NULL;
-    }
+	for (List<OMXPluginBase *>::iterator it = mPlugins.begin(); it != mPlugins.end(); ++it)
+	{
+		if (destroyOMXPlugin)
+			destroyOMXPlugin(*it);
+		else
+			delete *it;
+		
+		*it = NULL;
+	}
 
-    mPlugins.clear();
+	mPlugins.clear();
 }
 
-OMX_ERRORTYPE OMXMaster::makeComponentInstance(
-        const char *name,
-        const OMX_CALLBACKTYPE *callbacks,
-        OMX_PTR appData,
-        OMX_COMPONENTTYPE **component) {
-    Mutex::Autolock autoLock(mLock);
+OMX_ERRORTYPE OMXMaster::makeComponentInstance(const char *name,
+													const OMX_CALLBACKTYPE *callbacks,
+													OMX_PTR appData,
+													OMX_COMPONENTTYPE **component)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    *component = NULL;
+	*component = NULL;
 
-    ssize_t index = mPluginByComponentName.indexOfKey(String8(name));
+	ssize_t index = mPluginByComponentName.indexOfKey(String8(name));
 
-    if (index < 0) {
-        return OMX_ErrorInvalidComponentName;
-    }
+	if (index < 0)
+	{
+		return OMX_ErrorInvalidComponentName;
+	}
 
-    OMXPluginBase *plugin = mPluginByComponentName.valueAt(index);
-    OMX_ERRORTYPE err =
-        plugin->makeComponentInstance(name, callbacks, appData, component);
+	OMXPluginBase *plugin = mPluginByComponentName.valueAt(index);
+	OMX_ERRORTYPE err =  plugin->makeComponentInstance(name, callbacks, appData, component);
 
-    if (err != OMX_ErrorNone) {
-        return err;
-    }
+	if (err != OMX_ErrorNone) 
+	{
+		return err;
+	}
 
-    mPluginByInstance.add(*component, plugin);
+	mPluginByInstance.add(*component, plugin);
 
-    return err;
+	return err;
 }
 
-OMX_ERRORTYPE OMXMaster::destroyComponentInstance(
-        OMX_COMPONENTTYPE *component) {
-    Mutex::Autolock autoLock(mLock);
+OMX_ERRORTYPE OMXMaster::destroyComponentInstance( OMX_COMPONENTTYPE *component) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    ssize_t index = mPluginByInstance.indexOfKey(component);
+	ssize_t index = mPluginByInstance.indexOfKey(component);
 
-    if (index < 0) {
-        return OMX_ErrorBadParameter;
-    }
+	if (index < 0) 
+	{
+		return OMX_ErrorBadParameter;
+	}
 
-    OMXPluginBase *plugin = mPluginByInstance.valueAt(index);
-    mPluginByInstance.removeItemsAt(index);
+	OMXPluginBase *plugin = mPluginByInstance.valueAt(index);
+	mPluginByInstance.removeItemsAt(index);
 
-    return plugin->destroyComponentInstance(component);
+	return plugin->destroyComponentInstance(component);
 }
 
-OMX_ERRORTYPE OMXMaster::enumerateComponents(
-        OMX_STRING name,
-        size_t size,
-        OMX_U32 index) {
-    Mutex::Autolock autoLock(mLock);
+OMX_ERRORTYPE OMXMaster::enumerateComponents(OMX_STRING name,size_t size, OMX_U32 index) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    size_t numComponents = mPluginByComponentName.size();
+	size_t numComponents = mPluginByComponentName.size();
 
-    if (index >= numComponents) {
-        return OMX_ErrorNoMore;
-    }
+	if (index >= numComponents) 
+	{
+		return OMX_ErrorNoMore;
+	}
 
-    const String8 &name8 = mPluginByComponentName.keyAt(index);
+	const String8 &name8 = mPluginByComponentName.keyAt(index);
 
-    CHECK(size >= 1 + name8.size());
-    strcpy(name, name8.string());
+	CHECK(size >= 1 + name8.size());
+	strcpy(name, name8.string());
 
-    return OMX_ErrorNone;
+	return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE OMXMaster::getRolesOfComponent(
-        const char *name,
-        Vector<String8> *roles) {
-    Mutex::Autolock autoLock(mLock);
+OMX_ERRORTYPE OMXMaster::getRolesOfComponent( const char *name,Vector<String8> *roles) 
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、
+*/
+	Mutex::Autolock autoLock(mLock);
 
-    roles->clear();
+	roles->clear();
 
-    ssize_t index = mPluginByComponentName.indexOfKey(String8(name));
+	ssize_t index = mPluginByComponentName.indexOfKey(String8(name));
 
-    if (index < 0) {
-        return OMX_ErrorInvalidComponentName;
-    }
+	if (index < 0) 
+	{
+		return OMX_ErrorInvalidComponentName;
+	}
 
-    OMXPluginBase *plugin = mPluginByComponentName.valueAt(index);
-    return plugin->getRolesOfComponent(name, roles);
+	OMXPluginBase *plugin = mPluginByComponentName.valueAt(index);
+	return plugin->getRolesOfComponent(name, roles);
 }
 
 }  // namespace android

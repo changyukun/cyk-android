@@ -247,6 +247,7 @@ public:
 	
 private:
 
+	/* 应用程序使用播放器就是通过此类的代理BpMediaPlayer 来与此client  进行通信控制的*/
 	class Client : public BnMediaPlayer 
 	{
 			// IMediaPlayer interface

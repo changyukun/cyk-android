@@ -224,7 +224,7 @@ AwesomePlayer::AwesomePlayer()	: mQueueStarted(false),
 */
 	CHECK_EQ(mClient.connect(), (status_t)OK);
 
-	DataSource::RegisterDefaultSniffers();
+	DataSource::RegisterDefaultSniffers();/* 见函数的分析*/
 
 	mVideoEvent = new AwesomeEvent(this, &AwesomePlayer::onVideoEvent); /* 视频事件队列*/
 	mVideoEventPending = false;

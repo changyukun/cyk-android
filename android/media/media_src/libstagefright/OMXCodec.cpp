@@ -546,7 +546,10 @@ sp<MediaSource> OMXCodec::Create(	const sp<IOMX> &omx,
 		1、
 		
 	说明:
-		1、
+		1、a. OMXClient. 用于跟OMX IL 通讯. 假如最后用的是OMXCodec 也不是SoftCodec的话, 需要用到它.
+			b. mVideoTrack->getFormat ().  getFormat返回包含该video track格式信息的MetaData.
+			c. mVideoTrack. 如前面1.3.3 说的. 解码器会从 Video Track 中读取数据进行解码
+
 */
 	int32_t requiresSecureBuffers;
 	if (source->getFormat()->findInt32(kKeyRequiresSecureBuffers,&requiresSecureBuffers) && requiresSecureBuffers) 
@@ -619,9 +622,15 @@ sp<MediaSource> OMXCodec::Create(	const sp<IOMX> &omx,
 		{
 			ALOGV("Successfully allocated OMX node '%s'", componentName);
 
-			sp<OMXCodec> codec = new OMXCodec(	omx, node, quirks, flags,
-												createEncoder, mime, componentName,
-												source, nativeWindow);
+			sp<OMXCodec> codec = new OMXCodec(	omx, 
+												node, 
+												quirks,
+												flags,
+												createEncoder,
+												mime,
+												componentName,
+												source,
+												nativeWindow);/* 进入构造函数分析一下。。*/
 
 			observer->setCodec(codec);
 
@@ -1614,43 +1623,52 @@ status_t OMXCodec::setVideoOutputFormat(
     return err;
 }
 
-OMXCodec::OMXCodec(
-        const sp<IOMX> &omx, IOMX::node_id node,
-        uint32_t quirks, uint32_t flags,
-        bool isEncoder,
-        const char *mime,
-        const char *componentName,
-        const sp<MediaSource> &source,
-        const sp<ANativeWindow> &nativeWindow)
-    : mOMX(omx),
-      mOMXLivesLocally(omx->livesLocally(getpid())),
-      mNode(node),
-      mQuirks(quirks),
-      mFlags(flags),
-      mIsEncoder(isEncoder),
-      mMIME(strdup(mime)),
-      mComponentName(strdup(componentName)),
-      mSource(source),
-      mCodecSpecificDataIndex(0),
-      mState(LOADED),
-      mInitialBufferSubmit(true),
-      mSignalledEOS(false),
-      mNoMoreOutputData(false),
-      mOutputPortSettingsHaveChanged(false),
-      mSeekTimeUs(-1),
-      mSeekMode(ReadOptions::SEEK_CLOSEST_SYNC),
-      mTargetTimeUs(-1),
-      mOutputPortSettingsChangedPending(false),
-      mLeftOverBuffer(NULL),
-      mPaused(false),
-      mNativeWindow(
-              (!strncmp(componentName, "OMX.google.", 11)
-              || !strcmp(componentName, "OMX.Nvidia.mpeg2v.decode"))
-                        ? NULL : nativeWindow) {
-    mPortStatus[kPortIndexInput] = ENABLED;
-    mPortStatus[kPortIndexOutput] = ENABLED;
+OMXCodec::OMXCodec(	const sp<IOMX> &omx, IOMX::node_id node,
+						uint32_t quirks, 
+						uint32_t flags,
+						bool isEncoder,
+						const char *mime,
+						const char *componentName,
+						const sp<MediaSource> &source,
+						const sp<ANativeWindow> &nativeWindow)
+																: mOMX(omx),
+																mOMXLivesLocally(omx->livesLocally(getpid())),
+																mNode(node),
+																mQuirks(quirks),
+																mFlags(flags),
+																mIsEncoder(isEncoder),
+																mMIME(strdup(mime)),
+																mComponentName(strdup(componentName)),
+																mSource(source),
+																mCodecSpecificDataIndex(0),
+																mState(LOADED),
+																mInitialBufferSubmit(true),
+																mSignalledEOS(false),
+																mNoMoreOutputData(false),
+																mOutputPortSettingsHaveChanged(false),
+																mSeekTimeUs(-1),
+																mSeekMode(ReadOptions::SEEK_CLOSEST_SYNC),
+																mTargetTimeUs(-1),
+																mOutputPortSettingsChangedPending(false),
+																mLeftOverBuffer(NULL),
+																mPaused(false),
+																mNativeWindow((!strncmp(componentName, "OMX.google.", 11)|| !strcmp(componentName, "OMX.Nvidia.mpeg2v.decode"))? NULL : nativeWindow)
+{
+/*
+	参数:
+		1、
+		
+	返回:
+		1、
+		
+	说明:
+		1、见方法OMXCodec::Create  中new 了一个此实例
+*/
 
-    setComponentRole();
+	mPortStatus[kPortIndexInput] = ENABLED;
+	mPortStatus[kPortIndexOutput] = ENABLED;
+
+	setComponentRole();
 }
 
 // static
