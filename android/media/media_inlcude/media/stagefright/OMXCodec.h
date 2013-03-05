@@ -168,7 +168,7 @@ private:
 		uint8_t mData[1];
 	};
 
-	sp<IOMX> mOMX; /* 见构造函数对其进行的赋值，实质就是从OMXCodec::Create  传入过来的参数omx */
+	sp<IOMX> mOMX; /* 见构造函数对其进行的赋值，实质就是从OMXCodec::Create  传入过来的参数omx，类型为BpOMX */
 	bool mOMXLivesLocally;
 	IOMX::node_id mNode;
 	uint32_t mQuirks;

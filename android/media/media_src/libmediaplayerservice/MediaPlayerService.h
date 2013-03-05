@@ -62,7 +62,7 @@ private:
 
 class MediaPlayerService : public BnMediaPlayerService
 {
-	class Client;
+	class Client; /* 注意此类是继承了BnMediaPlayer  的，因此BpMediaPlayer  就是与此进行通信控制的*/
 
 	class AudioOutput : public MediaPlayerBase::AudioSink
 	{
@@ -247,7 +247,7 @@ public:
 	
 private:
 
-	/* 应用程序使用播放器就是通过此类的代理BpMediaPlayer 来与此client  进行通信控制的*/
+	/* 应用程序使用播放器就是通过此类的代理BpMediaPlayer 来与MediaPlaerService  进行播放操作控制的*/
 	class Client : public BnMediaPlayer 
 	{
 			// IMediaPlayer interface
@@ -277,9 +277,7 @@ private:
 			sp<MediaPlayerBase>     createPlayer(player_type playerType);
 
 			virtual status_t        setDataSource( const char *url, const KeyedVector<String8, String8> *headers);
-
 			virtual status_t        setDataSource(int fd, int64_t offset, int64_t length);
-
 			virtual status_t        setDataSource(const sp<IStreamSource> &source);
 
 			static  void            notify(void* cookie, int msg,int ext1, int ext2, const Parcel *obj);
@@ -318,9 +316,9 @@ private:
 			void disconnectNativeWindow();
 
 			mutable     Mutex                       mLock;
-			sp<MediaPlayerBase>         mPlayer;
+			sp<MediaPlayerBase>         mPlayer; /* 见方法MediaPlayerService::Client::setDataSource()  对其进行的赋值*/
 			sp<MediaPlayerService>      mService;
-			sp<IMediaPlayerClient>      mClient;
+			sp<IMediaPlayerClient>      mClient; /* 见构造函数MediaPlayerService::Client::Client()  对其进行的赋值，此值被赋值为BpMediaPlayerClient  类型的实例*/
 			sp<AudioOutput>             mAudioOutput;
 			pid_t                       mPid;
 			status_t                    mStatus;
@@ -352,7 +350,7 @@ private:
 	virtual   ~MediaPlayerService();
 
 	mutable     Mutex                       mLock;
-	SortedVector< wp<Client> >  mClients;
+	SortedVector< wp<Client> >  mClients; /* 多个client  的数组，初步理解为数组或者队列，见方法MediaPlayerService::create()  将新new  出来的client  添加到此队列中*/
 	SortedVector< wp<MediaRecorderClient> > mMediaRecorderClients;
 	int32_t                     mNextConnId;
 	sp<IOMX>                    mOMX;

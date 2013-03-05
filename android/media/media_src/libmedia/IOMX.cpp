@@ -953,8 +953,7 @@ status_t BnOMX::onTransact(uint32_t code, const Parcel &data, Parcel *reply, uin
 				OMX_U32 flags = data.readInt32();
 				OMX_TICKS timestamp = data.readInt64();
 
-				reply->writeInt32(
-				emptyBuffer(node, buffer, range_offset, range_length,flags, timestamp));
+				reply->writeInt32(emptyBuffer(node, buffer, range_offset, range_length,flags, timestamp));
 
 				return NO_ERROR;
 			}

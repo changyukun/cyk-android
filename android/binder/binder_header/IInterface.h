@@ -46,6 +46,18 @@ protected:
 	等价于:
 	aaa = IAudioFlinger::asInterface(binder);
 	即调用方法asInterface
+	asInterface 方法最后会返回对应的BpAudioFlinger  实例
+
+
+	因此通常的解释为:
+	形如aaa = interface_cast<Ixxxxxx>(binder);  的调用最后aaa  的值会等于Bpxxxxxx  类的一个实例
+	
+	如: aaa = interface_cast<Ixxxxxx>(binder);
+	则:	 aaa = Bpxxxxxx;
+
+	如: aaa = interface_cast<IMediaPlayerService>(binder);
+	则:	 aaa = BpMediaPlayerService;
+	
 */
 template<typename INTERFACE>
 inline sp<INTERFACE> interface_cast(const sp<IBinder>& obj)

@@ -364,6 +364,8 @@ sp<IMediaPlayer> MediaPlayerService::create(pid_t pid, const sp<IMediaPlayerClie
 /*
 	参数:
 		1、
+		2、client : 	此值为BpMediaPlayerClient  实例，见BnMediaPlayerService::onTransact()  中create 传入的参数，实质
+					就是BpMediaPlayerClient  实例的引用，用于与应用端BnMediaPlayerClient  实例进行通信的
 		
 	返回:
 		1、
@@ -693,7 +695,7 @@ MediaPlayerService::Client::Client(const sp<MediaPlayerService>& service,
 		1、
 		
 	说明:
-		1、
+		1、见方法MediaPlayerService::create()   的说明，调用new Client()  会调用此构造函数
 */
 	ALOGV("Client(%d) constructor", connId);
 	mPid = pid;
@@ -1035,7 +1037,7 @@ status_t MediaPlayerService::Client::setDataSource(const char *url, const KeyedV
 		mStatus = p->setDataSource(url, headers);
 		if (mStatus == NO_ERROR) 
 		{
-			mPlayer = p;
+			mPlayer = p; /* 将创建的真正的播放器保存，如StagefrightPlayer 实例*/
 		}
 		else 
 		{
@@ -1103,7 +1105,7 @@ status_t MediaPlayerService::Client::setDataSource(int fd, int64_t offset, int64
 	// now set data source
 	mStatus = p->setDataSource(fd, offset, length);
 	if (mStatus == NO_ERROR) 
-		mPlayer = p;
+		mPlayer = p; /* 将创建的真正的播放器保存，如StagefrightPlayer 实例*/
 
 	return mStatus;
 }
@@ -1139,7 +1141,7 @@ status_t MediaPlayerService::Client::setDataSource(const sp<IStreamSource> &sour
 
 	if (mStatus == OK) 
 	{
-		mPlayer = p;
+		mPlayer = p; /* 将创建的真正的播放器保存，如StagefrightPlayer 实例*/
 	}
 
 	return mStatus;

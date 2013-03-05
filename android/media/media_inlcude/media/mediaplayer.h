@@ -160,7 +160,14 @@ public:
 	virtual void notify(int msg, int ext1, int ext2, const Parcel *obj) = 0;
 };
 
-/* mediaplayer  客户端类定义*/
+/*
+	mediaplayer  客户端类定义
+	
+	此类为应用程序调用的方法类，但是从定义中可以看到MediaPlayer  类继承的是BnMediaPlayerClient  类，似乎
+	通过BpMediaPlayer  与BnMediaPlayer  通信来控制播放有矛盾，其实仔细看看MediaPlayer  类中各个方法的实现
+	就可知道，其中的各个方法都是调用其域成员mPlayer  的各个方法，而mPlayer  其实就是一个BpMediaPlayer 
+	类的实例，因此通过BpMediaPlayer  与BnMediaPlayer  通信来控制播放是有道理的
+*/
 class MediaPlayer : public BnMediaPlayerClient, public virtual IMediaDeathNotifier
 {
 public:

@@ -46,10 +46,30 @@ class BpMediaPlayerService: public BpInterface<IMediaPlayerService>
 public:
 	BpMediaPlayerService(const sp<IBinder>& impl) : BpInterface<IMediaPlayerService>(impl)
 	{
+	/*
+		参数:
+			1、
+			
+		返回:
+			1、
+			
+		说明:
+			1、
+	*/
 	}
 
 	virtual sp<IMediaMetadataRetriever> createMetadataRetriever(pid_t pid)
 	{
+	/*
+		参数:
+			1、
+			
+		返回:
+			1、
+			
+		说明:
+			1、
+	*/
 		Parcel data, reply;
 		data.writeInterfaceToken(IMediaPlayerService::getInterfaceDescriptor());
 		data.writeInt32(pid);
@@ -59,10 +79,20 @@ public:
 
 	virtual sp<IMediaPlayer> create( pid_t pid, const sp<IMediaPlayerClient>& client, int audioSessionId)
 	{
+	/*
+		参数:
+			1、
+			
+		返回:
+			1、
+			
+		说明:
+			1、
+	*/
 		Parcel data, reply;
 		data.writeInterfaceToken(IMediaPlayerService::getInterfaceDescriptor());
 		data.writeInt32(pid);
-		data.writeStrongBinder(client->asBinder());
+		data.writeStrongBinder(client->asBinder()); /* 将BnMediaPlayerClient  实例的binder 引用号传递给服务端*/
 		data.writeInt32(audioSessionId);
 
 		remote()->transact(CREATE, data, &reply);
@@ -71,6 +101,16 @@ public:
 
 	virtual sp<IMediaRecorder> createMediaRecorder(pid_t pid)
 	{
+	/*
+		参数:
+			1、
+			
+		返回:
+			1、
+			
+		说明:
+			1、
+	*/
 		Parcel data, reply;
 		data.writeInterfaceToken(IMediaPlayerService::getInterfaceDescriptor());
 		data.writeInt32(pid);
@@ -80,6 +120,16 @@ public:
 
 	virtual sp<IMemory> decode(const char* url, uint32_t *pSampleRate, int* pNumChannels, int* pFormat)
 	{
+	/*
+		参数:
+			1、
+			
+		返回:
+			1、
+			
+		说明:
+			1、
+	*/
 		Parcel data, reply;
 		data.writeInterfaceToken(IMediaPlayerService::getInterfaceDescriptor());
 		data.writeCString(url);
@@ -92,6 +142,16 @@ public:
 
 	virtual sp<IMemory> decode(int fd, int64_t offset, int64_t length, uint32_t *pSampleRate, int* pNumChannels, int* pFormat)
 	{
+	/*
+		参数:
+			1、
+			
+		返回:
+			1、
+			
+		说明:
+			1、
+	*/
 		Parcel data, reply;
 		data.writeInterfaceToken(IMediaPlayerService::getInterfaceDescriptor());
 		data.writeFileDescriptor(fd);
@@ -106,6 +166,16 @@ public:
 
 	virtual sp<IOMX> getOMX() 
 	{
+	/*
+		参数:
+			1、
+			
+		返回:
+			1、
+			
+		说明:
+			1、
+	*/
 		Parcel data, reply;
 		data.writeInterfaceToken(IMediaPlayerService::getInterfaceDescriptor());
 		remote()->transact(GET_OMX, data, &reply);
@@ -114,6 +184,16 @@ public:
 
 	virtual void addBatteryData(uint32_t params)
 	{
+	/*
+		参数:
+			1、
+			
+		返回:
+			1、
+			
+		说明:
+			1、
+	*/
 		Parcel data, reply;
 		data.writeInterfaceToken(IMediaPlayerService::getInterfaceDescriptor());
 		data.writeInt32(params);
@@ -122,6 +202,16 @@ public:
 
 	virtual status_t pullBatteryData(Parcel* reply)
 	{
+	/*
+		参数:
+			1、
+			
+		返回:
+			1、
+			
+		说明:
+			1、
+	*/
 		Parcel data;
 		data.writeInterfaceToken(IMediaPlayerService::getInterfaceDescriptor());
 		return remote()->transact(PULL_BATTERY_DATA, data, reply);
@@ -158,8 +248,7 @@ status_t BnMediaPlayerService::onTransact(uint32_t code, const Parcel& data, Par
 			{
 				CHECK_INTERFACE(IMediaPlayerService, data, reply);
 				pid_t pid = data.readInt32();
-				sp<IMediaPlayerClient> client =
-				interface_cast<IMediaPlayerClient>(data.readStrongBinder());
+				sp<IMediaPlayerClient> client = interface_cast<IMediaPlayerClient>(data.readStrongBinder()); /* 取出BnMediaPlayerClient  实例的binder 引用号，构建服务端的BpMediaPlayerClient  实例*/
 				int audioSessionId = data.readInt32();
 				sp<IMediaPlayer> player = create(pid, client, audioSessionId); /* 见MediaPlayerService::create()  方法*/
 				reply->writeStrongBinder(player->asBinder());

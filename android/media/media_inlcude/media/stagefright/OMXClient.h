@@ -36,7 +36,7 @@ public:
 	}
 
 private:
-	sp<IOMX> mOMX;
+	sp<IOMX> mOMX; /* 此值为BpOMX  类的实例，参考OMXClient::connect() 的说明。通过函数AwesomePlayer::AwesomePlayer() 调用了connect  方法*/
 
 	OMXClient(const OMXClient &);
 	OMXClient &operator=(const OMXClient &);

@@ -1990,7 +1990,7 @@ status_t AwesomePlayer::initAudioDecoder()
 	else 
 	{
 		/* 创建一个音频源，通过OpenMax 接口创建*/
-		mAudioSource = OMXCodec::Create(	mClient.interface(), 
+		mAudioSource = OMXCodec::Create(	mClient.interface(),  /* mClient.interface() 返回的就是mClient.mOMX，类型为BpOMX */
 										mAudioTrack->getFormat(),
 										false, // createEncoder
 										mAudioTrack);
@@ -2133,7 +2133,7 @@ status_t AwesomePlayer::initVideoDecoder(uint32_t flags)
 	ALOGV("initVideoDecoder flags=0x%x", flags);
 
 	/* 创建一个视频源，通过OpenMax 接口创建*/
-	mVideoSource = OMXCodec::Create(	mClient.interface(),
+	mVideoSource = OMXCodec::Create(	mClient.interface(), /* mClient.interface() 返回的就是mClient.mOMX，类型为BpOMX */
 									mVideoTrack->getFormat(),
 									false, // createEncoder
 									mVideoTrack,
