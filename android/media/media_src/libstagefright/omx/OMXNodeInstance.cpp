@@ -87,11 +87,11 @@ OMX_CALLBACKTYPE OMXNodeInstance::kCallbacks =
 };
 
 OMXNodeInstance::OMXNodeInstance(OMX *owner, const sp<IOMXObserver> &observer)
-										: mOwner(owner),
-										mNodeID(NULL),
-										mHandle(NULL),
-										mObserver(observer),
-										mDying(false) 
+																					: mOwner(owner),
+																					mNodeID(NULL),
+																					mHandle(NULL),
+																					mObserver(observer),
+																					mDying(false) 
 {
 /*
 	参数:
@@ -124,7 +124,8 @@ void OMXNodeInstance::setHandle(OMX::node_id node_id, OMX_HANDLETYPE handle)
 {
 /*
 	参数:
-		1、
+		1、node_id 	: 传入一个OMXNodeInstance  实例对应的id
+		2、handle	: 传入一个代表omx 标准组件的OMX_HANDLETYPE
 		
 	返回:
 		1、
@@ -636,13 +637,12 @@ status_t OMXNodeInstance::useGraphicBuffer2_l(OMX_U32 portIndex, const sp<Graphi
 	OMX_BUFFERHEADERTYPE *header = NULL;
 	OMX_U8* bufferHandle = const_cast<OMX_U8*>(reinterpret_cast<const OMX_U8*>(graphicBuffer->handle));
 
-	err = OMX_UseBuffer(
-	mHandle,
-	&header,
-	portIndex,
-	bufferMeta,
-	def.nBufferSize,
-	bufferHandle);
+	err = OMX_UseBuffer(	mHandle,
+						&header,
+						portIndex,
+						bufferMeta,
+						def.nBufferSize,
+						bufferHandle);
 
 	if (err != OMX_ErrorNone) 
 	{
