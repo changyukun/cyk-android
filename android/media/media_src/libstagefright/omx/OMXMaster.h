@@ -27,43 +27,42 @@
 
 namespace android {
 
-struct OMXMaster : public OMXPluginBase {
-    OMXMaster();
-    virtual ~OMXMaster();
+struct OMXMaster : public OMXPluginBase 
+{
+	OMXMaster();
+	virtual ~OMXMaster();
 
-    virtual OMX_ERRORTYPE makeComponentInstance(
-            const char *name,
-            const OMX_CALLBACKTYPE *callbacks,
-            OMX_PTR appData,
-            OMX_COMPONENTTYPE **component);
+	virtual OMX_ERRORTYPE makeComponentInstance(const char *name,
+													const OMX_CALLBACKTYPE *callbacks,
+													OMX_PTR appData,
+													OMX_COMPONENTTYPE **component);
 
-    virtual OMX_ERRORTYPE destroyComponentInstance(
-            OMX_COMPONENTTYPE *component);
+	virtual OMX_ERRORTYPE destroyComponentInstance(OMX_COMPONENTTYPE *component);
 
-    virtual OMX_ERRORTYPE enumerateComponents(
-            OMX_STRING name,
-            size_t size,
-            OMX_U32 index);
+	virtual OMX_ERRORTYPE enumerateComponents(OMX_STRING name,
+													size_t size,
+													OMX_U32 index);
 
-    virtual OMX_ERRORTYPE getRolesOfComponent(
-            const char *name,
-            Vector<String8> *roles);
+	virtual OMX_ERRORTYPE getRolesOfComponent(const char *name, Vector<String8> *roles);
 
 private:
-    Mutex mLock;
-    List<OMXPluginBase *> mPlugins;
-    KeyedVector<String8, OMXPluginBase *> mPluginByComponentName;
-    KeyedVector<OMX_COMPONENTTYPE *, OMXPluginBase *> mPluginByInstance;
+	Mutex mLock;
+	
+	List<OMXPluginBase *> mPlugins;
+	
+	KeyedVector<String8, OMXPluginBase *> mPluginByComponentName; /* 一个容器，名字与OMXPluginBase *  进行匹配的容器，即根据名字即可找到OMXPluginBase *  */
+	
+	KeyedVector<OMX_COMPONENTTYPE *, OMXPluginBase *> mPluginByInstance; /* 一个容器，OMX_COMPONENTTYPE * 与OMXPluginBase *  进行匹配的容器，即根据OMX_COMPONENTTYPE *  即可找到OMXPluginBase *  */
 
-    void *mVendorLibHandle;
+	void *mVendorLibHandle; /* 保存动态库打开的句柄，见OMXMaster::addPlugin(const char *libname) 对其进行的赋值*/
 
-    void addVendorPlugin();
-    void addPlugin(const char *libname);
-    void addPlugin(OMXPluginBase *plugin);
-    void clearPlugins();
+	void addVendorPlugin();
+	void addPlugin(const char *libname);
+	void addPlugin(OMXPluginBase *plugin);
+	void clearPlugins();
 
-    OMXMaster(const OMXMaster &);
-    OMXMaster &operator=(const OMXMaster &);
+	OMXMaster(const OMXMaster &);
+	OMXMaster &operator=(const OMXMaster &);
 };
 
 }  // namespace android

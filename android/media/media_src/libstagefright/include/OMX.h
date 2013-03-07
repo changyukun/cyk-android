@@ -95,12 +95,12 @@ private:
 	struct CallbackDispatcher;
 
 	Mutex mLock;
-	OMXMaster *mMaster;
+	OMXMaster *mMaster; /* 见构造函数OMX::OMX()  对其进行的赋值*/
 	int32_t mNodeCounter;
 
-	KeyedVector<wp<IBinder>, OMXNodeInstance *> mLiveNodes;
-	KeyedVector<node_id, OMXNodeInstance *> mNodeIDToInstance;
-	KeyedVector<node_id, sp<CallbackDispatcher> > mDispatchers;
+	KeyedVector<wp<IBinder>, OMXNodeInstance *> mLiveNodes; /* binder 与node 实例对应的容器。见方法OMX::allocateNode()  中实现了向容器中添加数据*/
+	KeyedVector<node_id, OMXNodeInstance *> mNodeIDToInstance; /* id 与node 实例对应的容器。见方法OMX::allocateNode()  中调用OMX::makeNodeID()  实现了向容器中添加数据  */
+	KeyedVector<node_id, sp<CallbackDispatcher> > mDispatchers; /* id 与callback 实例对应的容器。见方法OMX::allocateNode()  中实现了向容器中添加数据*/
 
 	node_id makeNodeID(OMXNodeInstance *instance);
 	OMXNodeInstance *findInstance(node_id node);

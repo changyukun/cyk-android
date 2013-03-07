@@ -44,7 +44,7 @@ SimpleSoftOMXComponent::SimpleSoftOMXComponent(const char *name,
 		1、
 		
 	说明:
-		1、
+		1、此类实质相当于通过成员mLooper  创建了一个线程，然后通过方法onMessageReceived  来处理各种消息
 */
 	mLooper->setName(name);
 	mLooper->registerHandler(mHandler);

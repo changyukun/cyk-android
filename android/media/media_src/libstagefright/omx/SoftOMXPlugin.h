@@ -23,29 +23,25 @@
 
 namespace android {
 
-struct SoftOMXPlugin : public OMXPluginBase {
-    SoftOMXPlugin();
+struct SoftOMXPlugin : public OMXPluginBase 
+{
+	SoftOMXPlugin();
 
-    virtual OMX_ERRORTYPE makeComponentInstance(
-            const char *name,
-            const OMX_CALLBACKTYPE *callbacks,
-            OMX_PTR appData,
-            OMX_COMPONENTTYPE **component);
+	virtual OMX_ERRORTYPE makeComponentInstance(	const char *name,
+														const OMX_CALLBACKTYPE *callbacks,
+														OMX_PTR appData,
+														OMX_COMPONENTTYPE **component);
 
-    virtual OMX_ERRORTYPE destroyComponentInstance(
-            OMX_COMPONENTTYPE *component);
+	virtual OMX_ERRORTYPE destroyComponentInstance(OMX_COMPONENTTYPE *component);
 
-    virtual OMX_ERRORTYPE enumerateComponents(
-            OMX_STRING name,
-            size_t size,
-            OMX_U32 index);
+	virtual OMX_ERRORTYPE enumerateComponents(	OMX_STRING name,
+													size_t size,
+													OMX_U32 index);
 
-    virtual OMX_ERRORTYPE getRolesOfComponent(
-            const char *name,
-            Vector<String8> *roles);
+	virtual OMX_ERRORTYPE getRolesOfComponent(const char *name, Vector<String8> *roles);
 
 private:
-    DISALLOW_EVIL_CONSTRUCTORS(SoftOMXPlugin);
+	DISALLOW_EVIL_CONSTRUCTORS(SoftOMXPlugin);
 };
 
 }  // namespace android

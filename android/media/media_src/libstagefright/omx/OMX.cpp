@@ -347,22 +347,33 @@ status_t OMX::allocateNode(const char *name, const sp<IOMXObserver> &observer, n
 {
 /*
 	参数:
-		1、
+		1、name	: 传入一个组件的名字
+		2、observer	: 传入一个IOMXObserver  实例指针
+		3、node	: 用于返回node  的id
 		
 	返回:
 		1、
 		
 	说明:
-		1、
+		1、函数执行过程
+			a、首先new  一个OMXNodeInstance  的实例
+			b、根据传入的组件名字、刚刚new 的OMXNodeInstance  实例来生成一个组件的实例
+			c、调用setHandle  将node  的id、组件的handle  设定到OMXNodeInstance  的实例中
+
+		2、注意
+			从此函数中的代码分析，每个node 节点即OMXNodeInstance  实例与一个组件对应，从
+			代码mMaster->makeComponentInstance()   调用中可知，实例一个组件的时候都是用新实例
+			的这个OMXNodeInstance  实例作为参数的
 */
 	Mutex::Autolock autoLock(mLock);
 
 	*node = 0;
 
-	OMXNodeInstance *instance = new OMXNodeInstance(this, observer);
+	OMXNodeInstance *instance = new OMXNodeInstance(this, observer); /* new  一个node  实例*/
 
 	OMX_COMPONENTTYPE *handle;
-	OMX_ERRORTYPE err = mMaster->makeComponentInstance(name, &OMXNodeInstance::kCallbacks, instance, &handle);
+	
+	OMX_ERRORTYPE err = mMaster->makeComponentInstance(name, &OMXNodeInstance::kCallbacks, instance, &handle); /* 实例一个组件，返回组件的handle  */
 
 	if (err != OMX_ErrorNone) 
 	{
@@ -373,12 +384,14 @@ status_t OMX::allocateNode(const char *name, const sp<IOMXObserver> &observer, n
 		return UNKNOWN_ERROR;
 	}
 
-	*node = makeNodeID(instance);
-	mDispatchers.add(*node, new CallbackDispatcher(instance));
+	*node = makeNodeID(instance); /* 见函数的说明，生成node 实例的id 同时又将id  号与实例对应插入相应的容器*/
+	
+	mDispatchers.add(*node, new CallbackDispatcher(instance)); /* 向容器中插入id  与callback  实例对应对的数据，见mDispatchers  变量的说明*/
 
-	instance->setHandle(*node, handle);
+	instance->setHandle(*node, handle); /* 见函数内部代码*/
 
-	mLiveNodes.add(observer->asBinder(), instance);
+	mLiveNodes.add(observer->asBinder(), instance); /* 向容器中插入binder  与node  实例对应对的数据，见mLiveNodes  变量的说明*/
+	
 	observer->asBinder()->linkToDeath(this);
 
 	return OK;
@@ -416,7 +429,7 @@ status_t OMX::freeNode(node_id node)
 	return err;
 }
 
-status_t OMX::sendCommand( node_id node, OMX_COMMANDTYPE cmd, OMX_S32 param) 
+status_t OMX::sendCommand(node_id node, OMX_COMMANDTYPE cmd, OMX_S32 param) 
 {
 /*
 	参数:
@@ -426,7 +439,8 @@ status_t OMX::sendCommand( node_id node, OMX_COMMANDTYPE cmd, OMX_S32 param)
 		1、
 		
 	说明:
-		1、
+		1、参看OMX::allocateNode()  方法的说明，因为每个node  实例与一个组件相对应，所以
+			此函数最后会调用到相应组件的sendCommand()  方法
 */
 	return findInstance(node)->sendCommand(cmd, param);
 }
@@ -441,7 +455,8 @@ status_t OMX::getParameter(node_id node, OMX_INDEXTYPE index, void *params, size
 		1、
 		
 	说明:
-		1、
+		1、参看OMX::allocateNode()  方法的说明，因为每个node  实例与一个组件相对应，所以
+			此函数最后会调用到相应组件的getParameter()  方法
 */
 	return findInstance(node)->getParameter(index, params, size);
 }
@@ -456,7 +471,8 @@ status_t OMX::setParameter(node_id node, OMX_INDEXTYPE index, const void *params
 		1、
 		
 	说明:
-		1、
+		1、参看OMX::allocateNode()  方法的说明，因为每个node  实例与一个组件相对应，所以
+			此函数最后会调用到相应组件的setParameter()  方法
 */
 	return findInstance(node)->setParameter(index, params, size);
 }
@@ -471,7 +487,8 @@ status_t OMX::getConfig(node_id node, OMX_INDEXTYPE index, void *params, size_t 
 		1、
 		
 	说明:
-		1、
+		1、参看OMX::allocateNode()  方法的说明，因为每个node  实例与一个组件相对应，所以
+			此函数最后会调用到相应组件的setParameter()  方法
 */
 	return findInstance(node)->getConfig( index, params, size);
 }
@@ -486,7 +503,8 @@ status_t OMX::setConfig(node_id node, OMX_INDEXTYPE index, const void *params, s
 		1、
 		
 	说明:
-		1、
+		1、参看OMX::allocateNode()  方法的说明，因为每个node  实例与一个组件相对应，所以
+			此函数最后会调用到相应组件的setParameter()  方法
 */
 	return findInstance(node)->setConfig( index, params, size);
 }
@@ -501,7 +519,8 @@ status_t OMX::getState(node_id node, OMX_STATETYPE* state)
 		1、
 		
 	说明:
-		1、
+		1、参看OMX::allocateNode()  方法的说明，因为每个node  实例与一个组件相对应，所以
+			此函数最后会调用到相应组件的getState()  方法
 */
 	return findInstance(node)->getState(state);
 }
@@ -674,7 +693,7 @@ status_t OMX::getExtensionIndex(node_id node,const char *parameter_name,OMX_INDE
 	return findInstance(node)->getExtensionIndex(parameter_name, index);
 }
 
-OMX_ERRORTYPE OMX::OnEvent(node_id node,
+OMX_ERRORTYPE OMX::OnEvent(	node_id node,
 								OMX_IN OMX_EVENTTYPE eEvent,
 								OMX_IN OMX_U32 nData1,
 								OMX_IN OMX_U32 nData2,
@@ -762,13 +781,13 @@ OMX::node_id OMX::makeNodeID(OMXNodeInstance *instance)
 {
 /*
 	参数:
-		1、
+		1、instance	: 传入一个OMXNodeInstance  的实例
 		
 	返回:
 		1、
 		
 	说明:
-		1、
+		1、生成一个node 的id  号，全局唯一，然后将这个id  号与传入的实例进行对应后插入到mNodeIDToInstance  对应的容器中
 */
 	// mLock is already held.
 
@@ -788,7 +807,7 @@ OMXNodeInstance *OMX::findInstance(node_id node)
 		1、
 		
 	说明:
-		1、
+		1、实质就是在容器mNodeIDToInstance  中查找与传入node  对应的那个OMXNodeInstance  实例
 */
 	Mutex::Autolock autoLock(mLock);
 
@@ -807,7 +826,7 @@ sp<OMX::CallbackDispatcher> OMX::findDispatcher(node_id node)
 		1、
 		
 	说明:
-		1、
+		1、实质就是在容器mDispatchers  中查找与传入node  对应的那个CallbackDispatcher  实例
 */
 	Mutex::Autolock autoLock(mLock);
 

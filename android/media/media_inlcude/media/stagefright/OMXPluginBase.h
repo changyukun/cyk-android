@@ -29,31 +29,27 @@ namespace android {
 
 struct OMXComponentBase;
 
-struct OMXPluginBase {
-    OMXPluginBase() {}
-    virtual ~OMXPluginBase() {}
+struct OMXPluginBase 
+{
+	OMXPluginBase() {}
+	virtual ~OMXPluginBase() {}
 
-    virtual OMX_ERRORTYPE makeComponentInstance(
-            const char *name,
-            const OMX_CALLBACKTYPE *callbacks,
-            OMX_PTR appData,
-            OMX_COMPONENTTYPE **component) = 0;
+	virtual OMX_ERRORTYPE makeComponentInstance(const char *name,
+													const OMX_CALLBACKTYPE *callbacks,
+													OMX_PTR appData,
+													OMX_COMPONENTTYPE **component) = 0;
 
-    virtual OMX_ERRORTYPE destroyComponentInstance(
-            OMX_COMPONENTTYPE *component) = 0;
+	virtual OMX_ERRORTYPE destroyComponentInstance(OMX_COMPONENTTYPE *component) = 0;
 
-    virtual OMX_ERRORTYPE enumerateComponents(
-            OMX_STRING name,
-            size_t size,
-            OMX_U32 index) = 0;
+	virtual OMX_ERRORTYPE enumerateComponents(	OMX_STRING name,
+													size_t size,
+													OMX_U32 index) = 0;
 
-    virtual OMX_ERRORTYPE getRolesOfComponent(
-            const char *name,
-            Vector<String8> *roles) = 0;
+	virtual OMX_ERRORTYPE getRolesOfComponent(const char *name, Vector<String8> *roles) = 0;
 
 private:
-    OMXPluginBase(const OMXPluginBase &);
-    OMXPluginBase &operator=(const OMXPluginBase &);
+	OMXPluginBase(const OMXPluginBase &);
+	OMXPluginBase &operator=(const OMXPluginBase &);
 };
 
 }  // namespace android

@@ -540,7 +540,7 @@ sp<MediaSource> OMXCodec::Create(	const sp<IOMX> &omx,
 {
 /*
 	参数:
-		1、omx	: 类型为BpOMX
+		1、omx	: 类型为BpOMX，(  另外BnOMX  是在OMX::OMX() 创建的)
 		
 	返回:
 		1、

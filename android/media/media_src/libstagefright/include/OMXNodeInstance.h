@@ -28,112 +28,110 @@ namespace android {
 class IOMXObserver;
 struct OMXMaster;
 
-struct OMXNodeInstance {
-    OMXNodeInstance(
-            OMX *owner, const sp<IOMXObserver> &observer);
+/*
+	此类的作用可参看OMX::allocateNode()  方法的说明
 
-    void setHandle(OMX::node_id node_id, OMX_HANDLETYPE handle);
+	此数据结构OMXNodeInstance 相当于在omx  标准组件定义的基础上又封装了一层，即相当于以omx  组件标准
+	为基类实现的此结构，所谓相当于是因为此为一个数据结构，而omx  组件标准也是一个数据结构，
+	那么如何实现的此关系继承就是在此数据结构中定义一个成员变量OMX_HANDLETYPE mHandle; 实质mHandle 就会
+	被赋值一个OMX_COMPONENTTYPE  类型的实例
 
-    OMX *owner();
-    sp<IOMXObserver> observer();
-    OMX::node_id nodeID();
+	因此调用此实例的很多方法就是通过域成员mHandle  调用的真正组件的方法，有些则是此数据结构自己
+	的方法
+*/
+struct OMXNodeInstance 
+{
+	OMXNodeInstance(OMX *owner, const sp<IOMXObserver> &observer);
 
-    status_t freeNode(OMXMaster *master);
+	void setHandle(OMX::node_id node_id, OMX_HANDLETYPE handle);
 
-    status_t sendCommand(OMX_COMMANDTYPE cmd, OMX_S32 param);
-    status_t getParameter(OMX_INDEXTYPE index, void *params, size_t size);
+	OMX *owner();
+	sp<IOMXObserver> observer();
+	OMX::node_id nodeID();
 
-    status_t setParameter(
-            OMX_INDEXTYPE index, const void *params, size_t size);
+	status_t freeNode(OMXMaster *master);
 
-    status_t getConfig(OMX_INDEXTYPE index, void *params, size_t size);
-    status_t setConfig(OMX_INDEXTYPE index, const void *params, size_t size);
+	status_t sendCommand(OMX_COMMANDTYPE cmd, OMX_S32 param);
+	status_t getParameter(OMX_INDEXTYPE index, void *params, size_t size);
 
-    status_t getState(OMX_STATETYPE* state);
+	status_t setParameter(OMX_INDEXTYPE index, const void *params, size_t size);
 
-    status_t enableGraphicBuffers(OMX_U32 portIndex, OMX_BOOL enable);
+	status_t getConfig(OMX_INDEXTYPE index, void *params, size_t size);
+	status_t setConfig(OMX_INDEXTYPE index, const void *params, size_t size);
 
-    status_t getGraphicBufferUsage(OMX_U32 portIndex, OMX_U32* usage);
+	status_t getState(OMX_STATETYPE* state);
 
-    status_t storeMetaDataInBuffers(OMX_U32 portIndex, OMX_BOOL enable);
+	status_t enableGraphicBuffers(OMX_U32 portIndex, OMX_BOOL enable);
 
-    status_t useBuffer(
-            OMX_U32 portIndex, const sp<IMemory> &params,
-            OMX::buffer_id *buffer);
+	status_t getGraphicBufferUsage(OMX_U32 portIndex, OMX_U32* usage);
 
-    status_t useGraphicBuffer(
-            OMX_U32 portIndex, const sp<GraphicBuffer> &graphicBuffer,
-            OMX::buffer_id *buffer);
+	status_t storeMetaDataInBuffers(OMX_U32 portIndex, OMX_BOOL enable);
 
-    status_t allocateBuffer(
-            OMX_U32 portIndex, size_t size, OMX::buffer_id *buffer,
-            void **buffer_data);
+	status_t useBuffer(OMX_U32 portIndex, const sp<IMemory> &params, OMX::buffer_id *buffer);
 
-    status_t allocateBufferWithBackup(
-            OMX_U32 portIndex, const sp<IMemory> &params,
-            OMX::buffer_id *buffer);
+	status_t useGraphicBuffer(OMX_U32 portIndex, const sp<GraphicBuffer> &graphicBuffer, OMX::buffer_id *buffer);
 
-    status_t freeBuffer(OMX_U32 portIndex, OMX::buffer_id buffer);
+	status_t allocateBuffer(OMX_U32 portIndex, size_t size, OMX::buffer_id *buffer, void **buffer_data);
 
-    status_t fillBuffer(OMX::buffer_id buffer);
+	status_t allocateBufferWithBackup(OMX_U32 portIndex, const sp<IMemory> &params, OMX::buffer_id *buffer);
 
-    status_t emptyBuffer(
-            OMX::buffer_id buffer,
-            OMX_U32 rangeOffset, OMX_U32 rangeLength,
-            OMX_U32 flags, OMX_TICKS timestamp);
+	status_t freeBuffer(OMX_U32 portIndex, OMX::buffer_id buffer);
 
-    status_t getExtensionIndex(
-            const char *parameterName, OMX_INDEXTYPE *index);
+	status_t fillBuffer(OMX::buffer_id buffer);
 
-    void onMessage(const omx_message &msg);
-    void onObserverDied(OMXMaster *master);
-    void onGetHandleFailed();
+	status_t emptyBuffer(OMX::buffer_id buffer, OMX_U32 rangeOffset, OMX_U32 rangeLength, OMX_U32 flags, OMX_TICKS timestamp);
 
-    static OMX_CALLBACKTYPE kCallbacks;
+	status_t getExtensionIndex(const char *parameterName, OMX_INDEXTYPE *index);
+
+	void onMessage(const omx_message &msg);
+	void onObserverDied(OMXMaster *master);
+	void onGetHandleFailed();
+
+	static OMX_CALLBACKTYPE kCallbacks;
 
 private:
-    Mutex mLock;
+	Mutex mLock;
 
-    OMX *mOwner;
-    OMX::node_id mNodeID;
-    OMX_HANDLETYPE mHandle;
-    sp<IOMXObserver> mObserver;
-    bool mDying;
+	OMX * mOwner; /* 此值为BnOMX  的实例，即在MediaPlayerService::getOMX()  方法中new  出来的*/
+	OMX::node_id mNodeID; /* 见方法OMX::allocateNode  中调用OMXNodeInstance::setHandle  方法对其进行的设定*/
+	OMX_HANDLETYPE mHandle;/* 此值为一个组件的句柄，见方法OMX::allocateNode  中调用OMXNodeInstance::setHandle  方法对其进行的设定*/
+	sp<IOMXObserver> mObserver;
+	bool mDying;
 
-    struct ActiveBuffer {
-        OMX_U32 mPortIndex;
-        OMX::buffer_id mID;
-    };
-    Vector<ActiveBuffer> mActiveBuffers;
+	struct ActiveBuffer 
+	{
+		OMX_U32 mPortIndex;
+		OMX::buffer_id mID;
+	};
+	Vector<ActiveBuffer> mActiveBuffers;
 
-    ~OMXNodeInstance();
+	~OMXNodeInstance();
 
-    void addActiveBuffer(OMX_U32 portIndex, OMX::buffer_id id);
-    void removeActiveBuffer(OMX_U32 portIndex, OMX::buffer_id id);
-    void freeActiveBuffers();
-    status_t useGraphicBuffer2_l(
-            OMX_U32 portIndex, const sp<GraphicBuffer> &graphicBuffer,
-            OMX::buffer_id *buffer);
-    static OMX_ERRORTYPE OnEvent(
-            OMX_IN OMX_HANDLETYPE hComponent,
-            OMX_IN OMX_PTR pAppData,
-            OMX_IN OMX_EVENTTYPE eEvent,
-            OMX_IN OMX_U32 nData1,
-            OMX_IN OMX_U32 nData2,
-            OMX_IN OMX_PTR pEventData);
+	void addActiveBuffer(OMX_U32 portIndex, OMX::buffer_id id);
+	void removeActiveBuffer(OMX_U32 portIndex, OMX::buffer_id id);
+	void freeActiveBuffers();
+	
+	status_t useGraphicBuffer2_l(OMX_U32 portIndex, 
+									const sp<GraphicBuffer> &graphicBuffer,
+									OMX::buffer_id *buffer);
+	
+	static OMX_ERRORTYPE OnEvent(OMX_IN OMX_HANDLETYPE hComponent,
+									OMX_IN OMX_PTR pAppData,
+									OMX_IN OMX_EVENTTYPE eEvent,
+									OMX_IN OMX_U32 nData1,
+									OMX_IN OMX_U32 nData2,
+									OMX_IN OMX_PTR pEventData);
 
-    static OMX_ERRORTYPE OnEmptyBufferDone(
-            OMX_IN OMX_HANDLETYPE hComponent,
-            OMX_IN OMX_PTR pAppData,
-            OMX_IN OMX_BUFFERHEADERTYPE *pBuffer);
+	static OMX_ERRORTYPE OnEmptyBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
+												OMX_IN OMX_PTR pAppData,
+												OMX_IN OMX_BUFFERHEADERTYPE *pBuffer);
 
-    static OMX_ERRORTYPE OnFillBufferDone(
-            OMX_IN OMX_HANDLETYPE hComponent,
-            OMX_IN OMX_PTR pAppData,
-            OMX_IN OMX_BUFFERHEADERTYPE *pBuffer);
+	static OMX_ERRORTYPE OnFillBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
+											OMX_IN OMX_PTR pAppData,
+											OMX_IN OMX_BUFFERHEADERTYPE *pBuffer);
 
-    OMXNodeInstance(const OMXNodeInstance &);
-    OMXNodeInstance &operator=(const OMXNodeInstance &);
+	OMXNodeInstance(const OMXNodeInstance &);
+	OMXNodeInstance &operator=(const OMXNodeInstance &);
 };
 
 }  // namespace android
