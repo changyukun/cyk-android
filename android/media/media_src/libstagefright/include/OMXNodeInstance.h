@@ -38,6 +38,29 @@ struct OMXMaster;
 
 	因此调用此实例的很多方法就是通过域成员mHandle  调用的真正组件的方法，有些则是此数据结构自己
 	的方法
+
+	每个OMXNodeInstance  实例都会通过其自己的id  号与一个CallbackDispatcher  实例进行对应( 见OMX::allocateNode()) ，而每
+	个OMXNodeInstance  实例又与一个组件相对应，则每个组件就会与一个CallbackDispatcher  实例对应了，CallbackDispatcher  
+	实例内部实现了等待消息、发送消息、处理消息等功能
+
+	每个OMXNodeInstance  实例又会通过自己的域成员mObserver  与一个OMXCodecObserver  实例对应了，从OMXCodec::Create()  的
+	代码可以看出来多个OMXNodeInstance  实例与一个OMXCodecObserver  实例对应
+
+
+	组件事件如何传递出来的，按照如下顺序:
+		1、OMXNodeInstance::kCallbacks  //每个组件都会将这个callback  注册到自己内部，如果组件有事件就会调用这个callback  向外部通知
+		2、OMXNodeInstance::OnEvent()				---> a 分支
+			OMXNodeInstance::OnEmptyBufferDone()		---> b 分支
+			OMXNodeInstance::OnFillBufferDone()			---> c 分支
+		3、OMX::OnEvent()			---> a 分支
+			OMX::OnEmptyBufferDone()	---> b 分支
+			OMX::OnFillBufferDone() 	---> c 分支
+		4、OMX::CallbackDispatcher::post()  //此时通过post  将消息插入到组件线程的队列中，接下来组件线程就会接收到消息进行处理
+		5、CallbackDispatcher::loop()
+		6、CallbackDispatcher::dispatch()
+		7、OMXNodeInstance::onMessage()
+		8、OMXCodecObserver::onMessage()
+		9、OMXCodec::on_message()
 */
 struct OMXNodeInstance 
 {
@@ -87,15 +110,25 @@ struct OMXNodeInstance
 	void onObserverDied(OMXMaster *master);
 	void onGetHandleFailed();
 
-	static OMX_CALLBACKTYPE kCallbacks;
+	static OMX_CALLBACKTYPE kCallbacks; /*  此值在在OMXNodeInstance.cpp  中设定为固定的值，其中各个方法均为OMXNodeInstance 实例的方法。
+										  见方法OMX::allocateNode()  中调用mMaster->makeComponentInstance()  将其设定到各个组件中的,  因此各个
+										  组件相应的事件通知如event、fillbufferdone、EmptyBufferDone  等就是通过设定到各个组件的这个
+										  全局变量通知出来的，其中的参数appdata  就是对应的OMXNodeInstance  实例，见方法OMX::allocateNode()  中
+										  调用mMaster->makeComponentInstance()  设定给各个组件的 */
 
 private:
 	Mutex mLock;
 
 	OMX * mOwner; /* 此值为BnOMX  的实例，即在MediaPlayerService::getOMX()  方法中new  出来的*/
+	
 	OMX::node_id mNodeID; /* 见方法OMX::allocateNode  中调用OMXNodeInstance::setHandle  方法对其进行的设定*/
-	OMX_HANDLETYPE mHandle;/* 此值为一个组件的句柄，见方法OMX::allocateNode  中调用OMXNodeInstance::setHandle  方法对其进行的设定*/
-	sp<IOMXObserver> mObserver;
+	
+	OMX_HANDLETYPE mHandle;/* 	此值为一个组件的句柄，见方法OMX::allocateNode  中调
+								用OMXNodeInstance::setHandle  方法对其进行的设定*/
+
+	sp<IOMXObserver> mObserver; /* 	此值的类型为OMXCodecObserver ，赋值过程见下面函数的调用顺序:
+									OMXCodec::Create()  ==> OMX::allocateNode()  ==>  new OMXNodeInstance(this, observer); ==> 构造函数==> 实现对此成员进行赋值*/
+
 	bool mDying;
 
 	struct ActiveBuffer 

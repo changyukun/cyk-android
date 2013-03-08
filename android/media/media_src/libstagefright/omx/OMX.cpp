@@ -41,7 +41,8 @@ namespace android {
 
 struct OMX::CallbackDispatcherThread : public Thread 
 {
-	CallbackDispatcherThread(CallbackDispatcher *dispatcher): mDispatcher(dispatcher) 
+	CallbackDispatcherThread(CallbackDispatcher *dispatcher) 
+																:mDispatcher(dispatcher) 
 	{
 	}
 
@@ -55,7 +56,9 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-
+/*
+	参见类OMXNodeInstance  的说明
+*/
 struct OMX::CallbackDispatcher : public RefBase 
 {
 	CallbackDispatcher(OMXNodeInstance *owner);
@@ -70,7 +73,7 @@ struct OMX::CallbackDispatcher : public RefBase
 private:
 	Mutex mLock;
 
-	OMXNodeInstance *mOwner;
+	OMXNodeInstance *mOwner; /* 见构造函数对其进行赋值，此值为OMXNodeInstance  的实例*/
 	bool mDone;
 	Condition mQueueChanged;
 	List<omx_message> mQueue;
@@ -83,7 +86,9 @@ private:
 	CallbackDispatcher &operator=(const CallbackDispatcher &);
 };
 
-OMX::CallbackDispatcher::CallbackDispatcher(OMXNodeInstance *owner) : mOwner(owner), mDone(false) 
+OMX::CallbackDispatcher::CallbackDispatcher(OMXNodeInstance *owner) 
+																	: mOwner(owner), 
+																	mDone(false) 
 {
 /*
 	参数:
@@ -143,8 +148,8 @@ void OMX::CallbackDispatcher::post(const omx_message &msg)
 */
 	Mutex::Autolock autoLock(mLock);
 
-	mQueue.push_back(msg);
-	mQueueChanged.signal();
+	mQueue.push_back(msg); 	/* 将消息推入消息队列*/
+	mQueueChanged.signal();	/* 发送有消息的信号*/
 }
 
 void OMX::CallbackDispatcher::dispatch(const omx_message &msg)
@@ -164,7 +169,7 @@ void OMX::CallbackDispatcher::dispatch(const omx_message &msg)
 		ALOGV("Would have dispatched a message to a node that's already gone.");
 		return;
 	}
-	mOwner->onMessage(msg);
+	mOwner->onMessage(msg); /* 调用OMXNodeInstance::onMessage()  方法*/
 }
 
 bool OMX::CallbackDispatcher::loop()
@@ -177,29 +182,27 @@ bool OMX::CallbackDispatcher::loop()
 		1、
 		
 	说明:
-		1、
+		1、相当于一个组件对应的线程循环
 */
 	for (;;) 
 	{
 		omx_message msg;
 
+		Mutex::Autolock autoLock(mLock);
+		while (!mDone && mQueue.empty()) 
 		{
-			Mutex::Autolock autoLock(mLock);
-			while (!mDone && mQueue.empty()) 
-			{
-				mQueueChanged.wait(mLock);
-			}
-
-			if (mDone) 
-			{
-				break;
-			}
-
-			msg = *mQueue.begin();
-			mQueue.erase(mQueue.begin());
+			mQueueChanged.wait(mLock);
 		}
 
-		dispatch(msg);
+		if (mDone) 
+		{
+			break;
+		}
+
+		msg = *mQueue.begin(); /* 取出本组件队列中的一条消息*/
+		mQueue.erase(mQueue.begin());
+
+		dispatch(msg); /* 分发消息进行处理*/
 	}
 
 	return false;
@@ -709,7 +712,7 @@ OMX_ERRORTYPE OMX::OnEvent(	node_id node,
 		1、
 		
 	说明:
-		1、
+		1、此方法在OMXNodeInstance::OnEvent()  中被调用
 */
 	ALOGV("OnEvent(%d, %ld, %ld)", eEvent, nData1, nData2);
 
@@ -720,7 +723,7 @@ OMX_ERRORTYPE OMX::OnEvent(	node_id node,
 	msg.u.event_data.data1 = nData1;
 	msg.u.event_data.data2 = nData2;
 
-	findDispatcher(node)->post(msg);
+	findDispatcher(node)->post(msg); /* 调用OMX::CallbackDispatcher::post()  */
 
 	return OMX_ErrorNone;
 }
@@ -735,7 +738,7 @@ OMX_ERRORTYPE OMX::OnEmptyBufferDone(node_id node, OMX_IN OMX_BUFFERHEADERTYPE *
 		1、
 		
 	说明:
-		1、
+		1、此方法在OMXNodeInstance::OnEmptyBufferDone()  中被调用
 */
 	ALOGV("OnEmptyBufferDone buffer=%p", pBuffer);
 
@@ -744,7 +747,7 @@ OMX_ERRORTYPE OMX::OnEmptyBufferDone(node_id node, OMX_IN OMX_BUFFERHEADERTYPE *
 	msg.node = node;
 	msg.u.buffer_data.buffer = pBuffer;
 
-	findDispatcher(node)->post(msg);
+	findDispatcher(node)->post(msg); /* 调用OMX::CallbackDispatcher::post()  */
 
 	return OMX_ErrorNone;
 }
@@ -759,7 +762,7 @@ OMX_ERRORTYPE OMX::OnFillBufferDone(node_id node, OMX_IN OMX_BUFFERHEADERTYPE *p
 		1、
 		
 	说明:
-		1、
+		1、此方法在OMXNodeInstance::OnFillBufferDone()  中被调用
 */
 	ALOGV("OnFillBufferDone buffer=%p", pBuffer);
 
@@ -774,7 +777,7 @@ OMX_ERRORTYPE OMX::OnFillBufferDone(node_id node, OMX_IN OMX_BUFFERHEADERTYPE *p
 	msg.u.extended_buffer_data.platform_private = pBuffer->pPlatformPrivate;
 	msg.u.extended_buffer_data.data_ptr = pBuffer->pBuffer;
 
-	findDispatcher(node)->post(msg);
+	findDispatcher(node)->post(msg); /* 调用OMX::CallbackDispatcher::post()  */
 
 	return OMX_ErrorNone;
 }

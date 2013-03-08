@@ -81,9 +81,9 @@ private:
 // static
 OMX_CALLBACKTYPE OMXNodeInstance::kCallbacks = 
 {
-    	&OnEvent, 
-	&OnEmptyBufferDone, 
-	&OnFillBufferDone
+    	&OnEvent, 			/* OMXNodeInstance::OnEvent() 				*/
+	&OnEmptyBufferDone,  	/* OMXNodeInstance::OnEmptyBufferDone() 	*/
+	&OnFillBufferDone		/* OMXNodeInstance::OnFillBufferDone() 		*/
 };
 
 OMXNodeInstance::OMXNodeInstance(OMX *owner, const sp<IOMXObserver> &observer)
@@ -868,8 +868,10 @@ status_t OMXNodeInstance::fillBuffer(OMX::buffer_id buffer)
 }
 
 status_t OMXNodeInstance::emptyBuffer(OMX::buffer_id buffer,
-        OMX_U32 rangeOffset, OMX_U32 rangeLength,
-        OMX_U32 flags, OMX_TICKS timestamp) 
+									OMX_U32 rangeOffset, 
+									OMX_U32 rangeLength,
+									OMX_U32 flags, 
+									OMX_TICKS timestamp) 
 {
 /*
 	参数:
@@ -937,7 +939,7 @@ void OMXNodeInstance::onMessage(const omx_message &msg)
 		buffer_meta->CopyFromOMX(buffer);
 	}
 
-	mObserver->onMessage(msg);
+	mObserver->onMessage(msg); /* 调用OMXCodecObserver::onMessage()  方法*/
 }
 
 void OMXNodeInstance::onObserverDied(OMXMaster *master) 
@@ -974,75 +976,81 @@ void OMXNodeInstance::onGetHandleFailed()
 }
 
 // static
-OMX_ERRORTYPE OMXNodeInstance::OnEvent(OMX_IN OMX_HANDLETYPE hComponent,
-										OMX_IN OMX_PTR pAppData,
-										OMX_IN OMX_EVENTTYPE eEvent,
-										OMX_IN OMX_U32 nData1,
-										OMX_IN OMX_U32 nData2,
-										OMX_IN OMX_PTR pEventData) 
+OMX_ERRORTYPE OMXNodeInstance::OnEvent(	OMX_IN OMX_HANDLETYPE hComponent,
+											OMX_IN OMX_PTR pAppData,
+											OMX_IN OMX_EVENTTYPE eEvent,
+											OMX_IN OMX_U32 nData1,
+											OMX_IN OMX_U32 nData2,
+											OMX_IN OMX_PTR pEventData) 
 {
 /*
 	参数:
-		1、
+		1、hComponent	: 传入一个代表相应组件的一个数据结构( omx  标准制定)
+		2、pAppData	: 与参数hComponent  代表的组件相对应的那个OMXNodeInstance  实例
+		3、
 		
 	返回:
 		1、
 		
 	说明:
-		1、
+		1、各个组件通过此函数上报Event  事件，见域成员kCallbacks  的说明
 */
 	OMXNodeInstance *instance = static_cast<OMXNodeInstance *>(pAppData);
 	if (instance->mDying)
 	{
 		return OMX_ErrorNone;
 	}
-	return instance->owner()->OnEvent(instance->nodeID(), eEvent, nData1, nData2, pEventData);
+	return instance->owner()->OnEvent(instance->nodeID(), eEvent, nData1, nData2, pEventData); /* 调用OMX::OnEvent()  方法*/
 }
 
 // static
-OMX_ERRORTYPE OMXNodeInstance::OnEmptyBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
+OMX_ERRORTYPE OMXNodeInstance::OnEmptyBufferDone(	OMX_IN OMX_HANDLETYPE hComponent,
 														OMX_IN OMX_PTR pAppData,
 														OMX_IN OMX_BUFFERHEADERTYPE* pBuffer) 
 {
 /*
 	参数:
-		1、
+		1、hComponent	: 传入一个代表相应组件的一个数据结构( omx  标准制定)
+		2、pAppData	: 与参数hComponent  代表的组件相对应的那个OMXNodeInstance  实例
+		3、
 		
 	返回:
 		1、
 		
 	说明:
-		1、
+		1、各个组件通过此函数上报EmptyBufferDone  事件，见域成员kCallbacks  的说明
 */
 	OMXNodeInstance *instance = static_cast<OMXNodeInstance *>(pAppData);
 	if (instance->mDying) 
 	{
 		return OMX_ErrorNone;
 	}
-	return instance->owner()->OnEmptyBufferDone(instance->nodeID(), pBuffer);
+	return instance->owner()->OnEmptyBufferDone(instance->nodeID(), pBuffer); /* 调用OMX::OnEmptyBufferDone()  方法*/
 }
 
 // static
-OMX_ERRORTYPE OMXNodeInstance::OnFillBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
+OMX_ERRORTYPE OMXNodeInstance::OnFillBufferDone(	OMX_IN OMX_HANDLETYPE hComponent,
 													OMX_IN OMX_PTR pAppData,
 													OMX_IN OMX_BUFFERHEADERTYPE* pBuffer) 
 {
 /*
 	参数:
-		1、
+		1、hComponent	: 传入一个代表相应组件的一个数据结构( omx  标准制定)
+		2、pAppData	: 与参数hComponent  代表的组件相对应的那个OMXNodeInstance  实例
+		3、
 		
 	返回:
 		1、
 		
 	说明:
-		1、
+		1、各个组件通过此函数上报FillBufferDone  事件，见域成员kCallbacks  的说明
 */
 	OMXNodeInstance *instance = static_cast<OMXNodeInstance *>(pAppData);
 	if (instance->mDying) 
 	{
 		return OMX_ErrorNone;
 	}
-	return instance->owner()->OnFillBufferDone(instance->nodeID(), pBuffer);
+	return instance->owner()->OnFillBufferDone(instance->nodeID(), pBuffer); /* 调用OMX::OnFillBufferDone()  方法*/
 }
 
 void OMXNodeInstance::addActiveBuffer(OMX_U32 portIndex, OMX::buffer_id id) 

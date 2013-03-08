@@ -210,7 +210,7 @@ struct OMXCodecObserver : public BnOMXObserver /* 注意此处的基类啊。。。*/
 		if (codec.get() != NULL) 
 		{
 			Mutex::Autolock autoLock(codec->mLock);
-			codec->on_message(msg);
+			codec->on_message(msg); /* 调用OMXCodec::on_message()  方法*/
 			codec.clear();
 		}
 	}
@@ -563,17 +563,19 @@ sp<MediaSource> OMXCodec::Create(	const sp<IOMX> &omx,
 	CHECK(success);
 
 	Vector<String8> matchingCodecs;
-	
-	findMatchingCodecs(mime, createEncoder, matchComponentName, flags, &matchingCodecs); /* 查找匹配的codeec */
+
+	/* 查找匹配的codecs ，这里只是名字匹配，并没有分配真正的codec  实例*/
+	findMatchingCodecs(mime, createEncoder, matchComponentName, flags, &matchingCodecs);
 
 	if (matchingCodecs.isEmpty()) 
 	{
 		return NULL;
 	}
 
-	sp<OMXCodecObserver> observer = new OMXCodecObserver;
+	sp<OMXCodecObserver> observer = new OMXCodecObserver; /* new  一个OMXCodecObserver  实例*/
 	IOMX::node_id node = 0;
 
+	/* 对每个codec  进行实例化，每个codec  与一个node  实例关联，node 实例参看类OMXNodeInstance  说明*/
 	for (size_t i = 0; i < matchingCodecs.size(); ++i) 
 	{
 		const char *componentNameBase = matchingCodecs[i].string();
@@ -617,11 +619,12 @@ sp<MediaSource> OMXCodec::Create(	const sp<IOMX> &omx,
 			}
 		}
 
-		status_t err = omx->allocateNode(componentName, observer, &node);
+		status_t err = omx->allocateNode(componentName, observer, &node); /* 分配一个node 实例，进入函数分析*/
 		if (err == OK) 
 		{
 			ALOGV("Successfully allocated OMX node '%s'", componentName);
 
+			/* 实例一个codec  并与node  实例关联*/
 			sp<OMXCodec> codec = new OMXCodec(	omx, 
 												node, 
 												quirks,
@@ -630,9 +633,9 @@ sp<MediaSource> OMXCodec::Create(	const sp<IOMX> &omx,
 												mime,
 												componentName,
 												source,
-												nativeWindow);/* 进入构造函数分析一下。。*/
+												nativeWindow); /* 进入构造函数分析一下。。*/
 
-			observer->setCodec(codec);
+			observer->setCodec(codec); /* 将codec  实例与OMXCodecObserver  实例关联*/
 
 			err = codec->configureCodec(meta);
 
@@ -2700,7 +2703,22 @@ void OMXCodec::on_message(const omx_message &msg)
 		1、
 		
 	说明:
-		1、
+		1、此函数被调用的过程:
+
+			1、OMXNodeInstance::kCallbacks  //每个组件都会将这个callback  注册到自己内部，如果组件有事件就会调用这个callback  向外部通知
+			2、OMXNodeInstance::OnEvent()				---> a 分支
+				OMXNodeInstance::OnEmptyBufferDone()		---> b 分支
+				OMXNodeInstance::OnFillBufferDone()			---> c 分支
+			3、OMX::OnEvent()			---> a 分支
+				OMX::OnEmptyBufferDone()	---> b 分支
+				OMX::OnFillBufferDone() 	---> c 分支
+			4、OMX::CallbackDispatcher::post()  //此时通过post  将消息插入到组件线程的队列中，接下来组件线程就会接收到消息进行处理
+			5、CallbackDispatcher::loop()
+			6、CallbackDispatcher::dispatch()
+			7、OMXNodeInstance::onMessage()
+			8、OMXCodecObserver::onMessage()
+			9、OMXCodec::on_message()
+	 	
 */
 	if (mState == ERROR) 
 	{
