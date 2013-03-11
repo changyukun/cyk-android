@@ -191,7 +191,7 @@ static const CodecInfo kEncoderInfo[] =
 #define CODEC_LOGV(x, ...) ALOGV("[%s] "x, mComponentName, ##__VA_ARGS__)
 #define CODEC_LOGE(x, ...) ALOGE("[%s] "x, mComponentName, ##__VA_ARGS__)
 
-struct OMXCodecObserver : public BnOMXObserver /* 注意此处的基类啊。。。*/
+struct OMXCodecObserver : public BnOMXObserver /* 注意此处的基类啊，参看OMXNodeInstance  类的说明。。。*/
 {
 	OMXCodecObserver() 
 	{
@@ -473,7 +473,7 @@ void OMXCodec::findMatchingCodecs( 	const char *mime,
 		2、createEncoder			: 是否创建一个编码器
 		3、matchComponentName	: 传入一个组件名字
 		4、flags				: 传入一个数字标记( 标记软解、硬解等信息)
-		5、matchingCodecs		: 用于返回所以匹配的解码器的名字字符串???????
+		5、matchingCodecs		: 用于返回所有匹配的解码器的名字字符串???????
 		
 	返回:
 		1、
@@ -489,15 +489,17 @@ void OMXCodec::findMatchingCodecs( 	const char *mime,
 
 		if (createEncoder) 
 		{
-			componentName = GetCodec(kEncoderInfo,
+			componentName = GetCodec(	kEncoderInfo,
 										sizeof(kEncoderInfo) / sizeof(kEncoderInfo[0]),
-										mime, index);
+										mime,
+										index);
 		}
 		else
 		{
-			componentName = GetCodec( kDecoderInfo,
+			componentName = GetCodec( 	kDecoderInfo,
 										sizeof(kDecoderInfo) / sizeof(kDecoderInfo[0]),
-										mime, index);
+										mime,
+										index);
 		}
 
 		if (!componentName) 
@@ -540,7 +542,13 @@ sp<MediaSource> OMXCodec::Create(	const sp<IOMX> &omx,
 {
 /*
 	参数:
-		1、omx	: 类型为BpOMX，(  另外BnOMX  是在OMX::OMX() 创建的)
+		1、omx					: 类型为BpOMX，(  另外BnOMX  是在OMX::OMX() 创建的)
+		2、meta				: 
+		3、createEncoder			: 
+		4、source				: 
+		5、matchComponentName	:
+		6、flags				: 
+		7、nativeWindow			: 
 		
 	返回:
 		1、
@@ -619,7 +627,7 @@ sp<MediaSource> OMXCodec::Create(	const sp<IOMX> &omx,
 			}
 		}
 
-		status_t err = omx->allocateNode(componentName, observer, &node); /* 分配一个node 实例，进入函数分析*/
+		status_t err = omx->allocateNode(componentName, observer, &node); /* 分配一个node 实例，因为omx 为 BpOMX 实例，所以进入BpOMX::allocateNode()  */
 		if (err == OK) 
 		{
 			ALOGV("Successfully allocated OMX node '%s'", componentName);
@@ -1805,9 +1813,9 @@ OMXCodec::OMXCodec(	const sp<IOMX> &omx, IOMX::node_id node,
 						const char *componentName,
 						const sp<MediaSource> &source,
 						const sp<ANativeWindow> &nativeWindow)
-																: mOMX(omx),
+																: mOMX(omx), /* 保存BpOMX */
 																mOMXLivesLocally(omx->livesLocally(getpid())),
-																mNode(node),
+																mNode(node), /* 保存node  id*/
 																mQuirks(quirks),
 																mFlags(flags),
 																mIsEncoder(isEncoder),
@@ -2716,8 +2724,11 @@ void OMXCodec::on_message(const omx_message &msg)
 			5、CallbackDispatcher::loop()
 			6、CallbackDispatcher::dispatch()
 			7、OMXNodeInstance::onMessage()
-			8、OMXCodecObserver::onMessage()
-			9、OMXCodec::on_message()
+			8、BpOMXObserver::onMessage()
+			9、BnOMXObserver::onTransact()
+			10、调用子类的onMessage()  方法( 如OMXCodecObserver )
+			11、OMXCodecObserver::onMessage()
+			12、OMXCodec::on_message()
 	 	
 */
 	if (mState == ERROR) 

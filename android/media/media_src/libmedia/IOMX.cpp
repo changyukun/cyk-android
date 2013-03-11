@@ -689,8 +689,7 @@ status_t BnOMX::onTransact(uint32_t code, const Parcel &data, Parcel *reply, uin
 
 				const char *name = data.readCString();
 
-				sp<IOMXObserver> observer =
-				interface_cast<IOMXObserver>(data.readStrongBinder());
+				sp<IOMXObserver> observer = interface_cast<IOMXObserver>(data.readStrongBinder());
 
 				node_id node;
 
@@ -998,7 +997,7 @@ public:
 		data.writeInterfaceToken(IOMXObserver::getInterfaceDescriptor());
 		data.write(&msg, sizeof(msg));
 
-		remote()->transact(OBSERVER_ON_MSG, data, &reply, IBinder::FLAG_ONEWAY);
+		remote()->transact(OBSERVER_ON_MSG, data, &reply, IBinder::FLAG_ONEWAY); /* 方法BnOMXObserver::onTransact()  会接收到继续执行*/
 	}
 };
 

@@ -939,7 +939,7 @@ void OMXNodeInstance::onMessage(const omx_message &msg)
 		buffer_meta->CopyFromOMX(buffer);
 	}
 
-	mObserver->onMessage(msg); /* 调用OMXCodecObserver::onMessage()  方法*/
+	mObserver->onMessage(msg); /* 调用BpOMXObserver::onMessage()，进而会调用具体实例的方法，如OMXCodecObserver::onMessage()  方法*/
 }
 
 void OMXNodeInstance::onObserverDied(OMXMaster *master) 

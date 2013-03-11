@@ -59,8 +59,11 @@ struct OMXMaster;
 		5、CallbackDispatcher::loop()
 		6、CallbackDispatcher::dispatch()
 		7、OMXNodeInstance::onMessage()
-		8、OMXCodecObserver::onMessage()
-		9、OMXCodec::on_message()
+		8、BpOMXObserver::onMessage()
+		9、BnOMXObserver::onTransact()
+		10、调用子类的onMessage()  方法( 如OMXCodecObserver )
+		11、OMXCodecObserver::onMessage()
+		12、OMXCodec::on_message()
 */
 struct OMXNodeInstance 
 {
@@ -126,8 +129,14 @@ private:
 	OMX_HANDLETYPE mHandle;/* 	此值为一个组件的句柄，见方法OMX::allocateNode  中调
 								用OMXNodeInstance::setHandle  方法对其进行的设定*/
 
-	sp<IOMXObserver> mObserver; /* 	此值的类型为OMXCodecObserver ，赋值过程见下面函数的调用顺序:
-									OMXCodec::Create()  ==> OMX::allocateNode()  ==>  new OMXNodeInstance(this, observer); ==> 构造函数==> 实现对此成员进行赋值*/
+	sp<IOMXObserver> mObserver; /* 	此值的类型为BpOMXObserver ，赋值过程见下面函数的调用顺序:
+									1、OMXCodec::Create() 		//new 一个BnOMXObserver  实例，例如在这方法中new 的实例就是OMXCodecObserver 类型的
+									2、BpOMX::allocateNode()		//应用通过调用BpOMX::allocateNode()  前一定会new  一个BnOMXObserver  实例的，例如第1  步OMXCodec::Create()  方法就是new  一个OMXCodecObserver  实例的
+									3、BnOMX::onTransact()		//binder 机制( 此处利用第2  步传过来的BnOMXObserver  实例的binder  生成本地的BpOMXObserver 实例)
+									4、OMX::allocateNode()		//binder 机制
+									3、new OMXNodeInstance(this, observer); //此处的observer  就是第3  步得到的BpOMXObserver  实例
+									4、构造函数==> 实现对此成员进行赋值
+								*/
 
 	bool mDying;
 

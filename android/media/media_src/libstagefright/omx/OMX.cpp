@@ -58,6 +58,14 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 /*
 	参见类OMXNodeInstance  的说明
+	
+	组件线程函数loop  得到运行的过程:
+	1、OMX::allocateNode()							//分配node  实例的函数入口
+	2、CallbackDispatcher::CallbackDispatcher() 			//构造函数
+	3、mThread = new CallbackDispatcherThread(this); 	//new 一个以Thread  类为基类的实例CallbackDispatcherThread
+	4、mThread->run() 								//调用CallbackDispatcherThread  实例的run()  方法，进而调用CallbackDispatcherThread::threadLoop()
+	5、CallbackDispatcherThread::threadLoop()			//线程体得到运行
+	6、mDispatcher->loop();							//CallbackDispatcher::loop() 得到运行
 */
 struct OMX::CallbackDispatcher : public RefBase 
 {
@@ -351,7 +359,7 @@ status_t OMX::allocateNode(const char *name, const sp<IOMXObserver> &observer, n
 /*
 	参数:
 		1、name	: 传入一个组件的名字
-		2、observer	: 传入一个IOMXObserver  实例指针
+		2、observer	: 传入一个IOMXObserver  实例指针，类型为BpOMXObserver
 		3、node	: 用于返回node  的id
 		
 	返回:
@@ -393,7 +401,7 @@ status_t OMX::allocateNode(const char *name, const sp<IOMXObserver> &observer, n
 
 	instance->setHandle(*node, handle); /* 见函数内部代码*/
 
-	mLiveNodes.add(observer->asBinder(), instance); /* 向容器中插入binder  与node  实例对应对的数据，见mLiveNodes  变量的说明*/
+	mLiveNodes.add(observer->asBinder(), instance); /* 向容器中插入observer  的binder  与node  实例对应对的数据，见mLiveNodes  变量的说明*/
 	
 	observer->asBinder()->linkToDeath(this);
 

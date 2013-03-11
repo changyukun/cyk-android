@@ -170,7 +170,7 @@ private:
 
 	sp<IOMX> mOMX; /* 见构造函数对其进行的赋值，实质就是从OMXCodec::Create  传入过来的参数omx，类型为BpOMX */
 	bool mOMXLivesLocally;
-	IOMX::node_id mNode;
+	IOMX::node_id mNode; /* 见OMXCodec::Create() 实例化时调用的构造函数对其进行的赋值，就是一个node  实例的id  */
 	uint32_t mQuirks;
 
 	// Flags specified in the creation of the codec.
