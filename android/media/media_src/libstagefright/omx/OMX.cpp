@@ -235,7 +235,9 @@ bool OMX::CallbackDispatcherThread::threadLoop()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-OMX::OMX()  : mMaster(new OMXMaster), mNodeCounter(0) 
+OMX::OMX()  
+			: mMaster(new OMXMaster), 
+			mNodeCounter(0) 
 {
 /*
 	²ÎÊý:

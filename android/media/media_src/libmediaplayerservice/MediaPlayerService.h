@@ -315,19 +315,19 @@ private:
 			// Disconnect from the currently connected ANativeWindow.
 			void disconnectNativeWindow();
 
-			mutable     Mutex                       mLock;
-			sp<MediaPlayerBase>         mPlayer; /* 见方法MediaPlayerService::Client::setDataSource()  对其进行的赋值*/
-			sp<MediaPlayerService>      mService;
-			sp<IMediaPlayerClient>      mClient; /* 见构造函数MediaPlayerService::Client::Client()  对其进行的赋值，此值被赋值为BpMediaPlayerClient  类型的实例*/
-			sp<AudioOutput>             mAudioOutput;
-			pid_t                       mPid;
-			status_t                    mStatus;
-			bool                        mLoop;
-			int32_t                     mConnId;
-			int                         mAudioSessionId;
-			uid_t                       mUID;
-			sp<ANativeWindow>           mConnectedWindow;
-			sp<IBinder>                 mConnectedWindowBinder;
+			mutable     Mutex                       	mLock;
+			sp<MediaPlayerBase>         		mPlayer; /* 见方法MediaPlayerService::Client::setDataSource()  对其进行的赋值*/
+			sp<MediaPlayerService>      	mService;
+			sp<IMediaPlayerClient>      		mClient; /* 见构造函数MediaPlayerService::Client::Client()  对其进行的赋值，此值被赋值为BpMediaPlayerClient  类型的实例*/
+			sp<AudioOutput>             		mAudioOutput;
+			pid_t                       	mPid;
+			status_t                    	mStatus;
+			bool                        	mLoop;
+			int32_t                     	mConnId;
+			int                         	mAudioSessionId;
+			uid_t                       	mUID;
+			sp<ANativeWindow>   	mConnectedWindow;
+			sp<IBinder>               	mConnectedWindowBinder;
 
 			// Metadata filters.
 			media::Metadata::Filter mMetadataAllow;  // protected by mLock
@@ -353,7 +353,7 @@ private:
 	SortedVector< wp<Client> >  mClients; /* 多个client  的数组，初步理解为数组或者队列，见方法MediaPlayerService::create()  将新new  出来的client  添加到此队列中*/
 	SortedVector< wp<MediaRecorderClient> > mMediaRecorderClients;
 	int32_t                     mNextConnId;
-	sp<IOMX>                    mOMX;
+	sp<IOMX>                    mOMX; /* 见方法MediaPlayerService::getOMX()  对其进行的赋值，此值的类型为一个BnOMX  的子类OMX  类型*/
 };
 
 // ----------------------------------------------------------------------------

@@ -151,7 +151,7 @@ private:
 	OMXClient mClient; /* 见构造函数AwesomePlayer::AwesomePlayer()  调用了此实例的connect  方法，然后对此实例的mOMX  域成员进行了赋值，即mOMX 为OMX 的代理BpOMX  的实例*/
 	TimedEventQueue mQueue; /* 见AwesomePlayer::prepareAsync_l() 方法对start 的调用，从而创建了event  线程*/
 	bool mQueueStarted;
-	wp<MediaPlayerBase> mListener;
+	wp<MediaPlayerBase> mListener; /* 见StagefrightPlayer::StagefrightPlayer()  方法对其进行的赋值，实质就是一个StagefrightPlayer  的实例*/
 	bool mUIDValid;
 	uid_t mUID;
 

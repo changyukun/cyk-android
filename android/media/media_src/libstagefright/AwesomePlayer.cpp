@@ -69,7 +69,9 @@ static const size_t kHighWaterMarkBytes = 200000;
 /* 事件*/
 struct AwesomeEvent : public TimedEventQueue::Event 
 {
-	AwesomeEvent(AwesomePlayer *player,void (AwesomePlayer::*method)())  : mPlayer(player), mMethod(method) 
+	AwesomeEvent(AwesomePlayer *player,void (AwesomePlayer::*method)())  
+																		: mPlayer(player), 
+																		mMethod(method) 
 	{
 	}
 
@@ -222,7 +224,7 @@ AwesomePlayer::AwesomePlayer()	: mQueueStarted(false),
 	说明:
 		1、
 */
-	CHECK_EQ(mClient.connect(), (status_t)OK);
+	CHECK_EQ(mClient.connect(), (status_t)OK);/* 调用OMXClient  的connect()  方法*/
 
 	DataSource::RegisterDefaultSniffers();/* 见函数的分析*/
 
