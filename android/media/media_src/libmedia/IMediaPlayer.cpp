@@ -616,8 +616,7 @@ status_t BnMediaPlayer::onTransact(uint32_t code, const Parcel& data, Parcel* re
 		case SET_VIDEO_SURFACETEXTURE: 
 			{
 				CHECK_INTERFACE(IMediaPlayer, data, reply);
-				sp<ISurfaceTexture> surfaceTexture =
-				interface_cast<ISurfaceTexture>(data.readStrongBinder());
+				sp<ISurfaceTexture> surfaceTexture = interface_cast<ISurfaceTexture>(data.readStrongBinder());
 				reply->writeInt32(setVideoSurfaceTexture(surfaceTexture));
 				return NO_ERROR;
 			} 

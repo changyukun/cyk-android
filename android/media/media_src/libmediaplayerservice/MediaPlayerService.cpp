@@ -680,7 +680,7 @@ void MediaPlayerService::removeClient(wp<Client> client)
 	mClients.remove(client);
 }
 
-MediaPlayerService::Client::Client(const sp<MediaPlayerService>& service, 
+MediaPlayerService::Client::Client(	const sp<MediaPlayerService>& service, 
 								pid_t pid,
 								int32_t connId, 
 								const sp<IMediaPlayerClient>& client,
@@ -1188,8 +1188,7 @@ status_t MediaPlayerService::Client::setVideoSurfaceTexture(const sp<ISurfaceTex
 	if (p == 0)
 		return UNKNOWN_ERROR;
 
-	sp<IBinder> binder(surfaceTexture == NULL ? NULL :
-	surfaceTexture->asBinder());
+	sp<IBinder> binder(surfaceTexture == NULL ? NULL : surfaceTexture->asBinder());
 	if (mConnectedWindowBinder == binder) 
 	{
 		return OK;
