@@ -70,7 +70,7 @@ static const size_t kHighWaterMarkBytes = 200000;
 struct AwesomeEvent : public TimedEventQueue::Event 
 {
 	AwesomeEvent(AwesomePlayer *player,void (AwesomePlayer::*method)())  
-																		: mPlayer(player), 
+																		: mPlayer(player), /* 对mPlayer  域成员进行赋值*/
 																		mMethod(method) 
 	{
 	}
@@ -230,10 +230,13 @@ AwesomePlayer::AwesomePlayer()	: mQueueStarted(false),
 
 	mVideoEvent = new AwesomeEvent(this, &AwesomePlayer::onVideoEvent); /* 视频事件队列*/
 	mVideoEventPending = false;
+	
 	mStreamDoneEvent = new AwesomeEvent(this, &AwesomePlayer::onStreamDone);
 	mStreamDoneEventPending = false;
+	
 	mBufferingEvent = new AwesomeEvent(this, &AwesomePlayer::onBufferingUpdate);
 	mBufferingEventPending = false;
+	
 	mVideoLagEvent = new AwesomeEvent(this, &AwesomePlayer::onVideoLagUpdate);
 	mVideoEventPending = false;
 
