@@ -213,13 +213,17 @@ status_t MediaPlayer::setDataSource(const char *url, const KeyedVector<String8, 
 		1、
 		
 	说明:
-		1、
+		1、此函数实现的功能:
+			a、获得BnMediaPlayerService  服务的一个本地代理，即  BpMediaPlayerService
+			b、调用本地代理BpMediaPlayerService  的create()  方法实现在服务端创建一个BnMediaPlayer ( client 实例)
+			c、根据服务端返回BnMediaPlayer  的binder  号，创建一个本地的代理BpMediaPlayer  保存于域成员mPlayer  中
+			d、然后调用本地代理BpMediaPlayer  的方法
 */
 	ALOGV("setDataSource(%s)", url);
 	status_t err = BAD_VALUE;
 	if (url != NULL) 
 	{
-		const sp<IMediaPlayerService>& service(getMediaPlayerService());
+		const sp<IMediaPlayerService>& service(getMediaPlayerService()); /* 获得到BpMediaPlayerService  */
 		if (service != 0) 
 		{
 			sp<IMediaPlayer> player(service->create(getpid(), this, mAudioSessionId));
@@ -227,7 +231,7 @@ status_t MediaPlayer::setDataSource(const char *url, const KeyedVector<String8, 
 			{
 				player.clear();
 			}
-			err = attachNewPlayer(player);
+			err = attachNewPlayer(player); /* 将本地代理BpMediaPlayer  保存到域成员mPlayer  中*/
 		}
 	}
 	return err;

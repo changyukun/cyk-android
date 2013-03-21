@@ -261,7 +261,7 @@ void MediaPlayerService::instantiate()
 	说明:
 		1、
 */
-    	defaultServiceManager()->addService(String16("media.player"), new MediaPlayerService());
+    	defaultServiceManager()->addService(String16("media.player"), new MediaPlayerService());/* 此处new  了一个MediaPlayerService 的实例，并将其注册到ServiceManager  中*/
 }
 
 MediaPlayerService::MediaPlayerService()
@@ -957,7 +957,7 @@ sp<MediaPlayerBase> MediaPlayerService::Client::createPlayer(player_type playerT
 */
 	// determine if we have the right player type
 	sp<MediaPlayerBase> p = mPlayer;
-	if ((p != NULL) && (p->playerType() != playerType))
+	if ((p != NULL) && (p->playerType() != playerType)) /* 清除原有的播放器*/
 	{
 		ALOGV("delete player");
 		p.clear();
@@ -965,7 +965,7 @@ sp<MediaPlayerBase> MediaPlayerService::Client::createPlayer(player_type playerT
 	
 	if (p == NULL)
 	{
-		p = android::createPlayer(playerType, this, notify);
+		p = android::createPlayer(playerType, this, notify); /* 创建一个新的播放器*/
 	}
 
 	if (p != NULL) 
@@ -1018,11 +1018,11 @@ status_t MediaPlayerService::Client::setDataSource(const char *url, const KeyedV
 	}
 	else
 	{
-		player_type playerType = getPlayerType(url);
+		player_type playerType = getPlayerType(url); /* 获取播放器的类型*/
 		ALOGV("player type = %d", playerType);
 
 		// create the right type of player
-		sp<MediaPlayerBase> p = createPlayer(playerType);
+		sp<MediaPlayerBase> p = createPlayer(playerType); /* 创建一个播放器*/
 		if (p == NULL) 
 			return NO_INIT;
 
@@ -1088,11 +1088,11 @@ status_t MediaPlayerService::Client::setDataSource(int fd, int64_t offset, int64
 		ALOGV("calculated length = %lld", length);
 	}
 
-	player_type playerType = getPlayerType(fd, offset, length);
+	player_type playerType = getPlayerType(fd, offset, length); /* 获取播放器的类型*/
 	ALOGV("player type = %d", playerType);
 
 	// create the right type of player
-	sp<MediaPlayerBase> p = createPlayer(playerType);
+	sp<MediaPlayerBase> p = createPlayer(playerType); /* 创建一个播放器*/
 	if (p == NULL) 
 		return NO_INIT;
 

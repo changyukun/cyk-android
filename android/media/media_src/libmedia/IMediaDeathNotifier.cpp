@@ -42,17 +42,17 @@ const sp<IMediaPlayerService>& IMediaDeathNotifier::getMediaPlayerService()
 		1、
 		
 	说明:
-		1、
+		1、返回一个代理，即BpMediaPlayerService  
 */
 	ALOGV("getMediaPlayerService");
 	Mutex::Autolock _l(sServiceLock);
 	if (sMediaPlayerService.get() == 0) 
 	{
-		sp<IServiceManager> sm = defaultServiceManager();
+		sp<IServiceManager> sm = defaultServiceManager();/* 获取到系统的ServiceManager  的代理*/
 		sp<IBinder> binder;
 		do 
 		{
-			binder = sm->getService(String16("media.player"));
+			binder = sm->getService(String16("media.player"));/* 获取到MediaPlayerService  的服务binder 号，见main_mediaservice.cpp */
 			if (binder != 0)
 			{
 				break;
@@ -68,7 +68,7 @@ const sp<IMediaPlayerService>& IMediaDeathNotifier::getMediaPlayerService()
 		
 		binder->linkToDeath(sDeathNotifier);
 		
-		sMediaPlayerService = interface_cast<IMediaPlayerService>(binder);
+		sMediaPlayerService = interface_cast<IMediaPlayerService>(binder); /* 获得到MediaPlayerService  的代理BpMediaPlayerService */
 	}
 	
 	ALOGE_IF(sMediaPlayerService == 0, "no media player service!?");

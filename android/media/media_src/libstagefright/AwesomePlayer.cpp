@@ -231,7 +231,7 @@ AwesomePlayer::AwesomePlayer()	: mQueueStarted(false),
 	mVideoEvent = new AwesomeEvent(this, &AwesomePlayer::onVideoEvent); /* 视频事件队列*/
 	mVideoEventPending = false;
 	
-	mStreamDoneEvent = new AwesomeEvent(this, &AwesomePlayer::onStreamDone);
+	mStreamDoneEvent = new AwesomeEvent(this, &AwesomePlayer::onStreamDone); /* stream  事件驱动队列*/
 	mStreamDoneEventPending = false;
 	
 	mBufferingEvent = new AwesomeEvent(this, &AwesomePlayer::onBufferingUpdate);

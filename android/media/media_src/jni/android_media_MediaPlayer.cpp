@@ -165,11 +165,11 @@ static sp<MediaPlayer> getMediaPlayer(JNIEnv* env, jobject thiz)
 		1、
 		
 	说明:
-		1、
+		1、实质就是返回java  应用创建的BnMediaPlayerClient  实例
 */
 	Mutex::Autolock l(sLock);
 	MediaPlayer* const p = (MediaPlayer*)env->GetIntField(thiz, fields.context);
-	return sp<MediaPlayer>(p);
+	return sp<MediaPlayer>(p); 
 }
 
 static sp<MediaPlayer> setMediaPlayer(JNIEnv* env, jobject thiz, const sp<MediaPlayer>& player)
@@ -1226,6 +1226,19 @@ static void android_media_MediaPlayer_getParameter(JNIEnv *env, jobject thiz, ji
 	Parcel *reply = parcelForJavaObject(env, java_reply);
 	process_media_player_call(env, thiz, mp->getParameter(key, reply), NULL, NULL );
 }
+
+
+/*
+	changyukun
+	
+	跟踪一个jni  的调用过程，以setDataSource  为例
+		1、java ==>  setDataSource()
+		2、android_media_MediaPlayer_setDataSource()
+		3、android_media_MediaPlayer_setDataSourceAndHeaders()
+		4、mp = getMediaPlayer(env, thiz);    ==>   mp->setDataSource()
+		5、MediaPlayer::setDataSource()
+		6、
+*/
 
 // ----------------------------------------------------------------------------
 
