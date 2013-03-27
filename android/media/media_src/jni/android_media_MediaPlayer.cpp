@@ -295,7 +295,7 @@ static void android_media_MediaPlayer_setDataSourceAndHeaders(JNIEnv *env, jobje
 		return;
 	}
 
-	status_t opStatus = mp->setDataSource( pathStr, headersVector.size() > 0? &headersVector : NULL);
+	status_t opStatus = mp->setDataSource( pathStr, headersVector.size() > 0? &headersVector : NULL); /* MediaPlayer::setDataSource() */
 
 	process_media_player_call(env, thiz, opStatus, "java/io/IOException","setDataSource failed." );
 }
@@ -1229,7 +1229,7 @@ static void android_media_MediaPlayer_getParameter(JNIEnv *env, jobject thiz, ji
 
 
 /*
-	changyukun
+	changyukun jnijni
 	
 	跟踪一个jni  的调用过程，以setDataSource  为例
 		1、java ==>  setDataSource()
